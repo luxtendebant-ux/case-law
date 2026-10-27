@@ -1234,7 +1234,7 @@ function customAsSource(c){return{id:"c_"+c.id,name:c.name,kind:c.kind||"free",c
 function allSources(){return SOURCES.concat(customList().map(customAsSource))}
 function renderSources(p){
   $("#srcCards").innerHTML=allSources().map(s=>{const acts=s.actions(p);return `<div class="srcc"><div class="row" style="justify-content:space-between"><h4>${esc(s.name)}</h4><span>${s.custom?'<span class="tag acc">мой</span>':""}<span class="tag ${s.kind==="free"?"ok":"warn"}">${s.kind==="free"?"бесплатно":"подписка"}</span></span></div><p>${esc(s.desc)}</p><div class="acts">${acts.map((a,i)=>`<button class="btn sm" data-src="${s.id}" data-i="${i}" title="${esc(a.copy?"Запрос будет скопирован в буфер обмена":(a.note||""))}">${esc(a.label)}${a.copy?" ⧉":""}</button>`).join("")}</div></div>`}).join("");
-  $$("#srcCards button").forEach(b=>b.onclick=async()=>{const s=allSources().find(x=>x.id===b.dataset.src);const a=s.actions(qParts())[+b.dataset.i];if(a.copy){try{await navigator.clipboard.writeText(a.copy);toast("Запрос скопирован: "+a.copy+" — вставьте его в строку поиска (Ctrl+V)",5000)}catch(e){toast("Скопируйте запрос вручную: "+a.copy,6000)}}window.open(a.url,"_blank","noopener");addHist(qString(qParts())||"(без запроса)",s.name+" — "+a.label)})}
+  $$("#srcCards button").forEach(b=>b.onclick=async()=>{const s=allSources().find(x=>x.id===b.dataset.src);const a=s.actions(qParts())[+b.dataset.i];window.open(a.url,"_blank","noopener");if(a.copy){try{await Promise.race([navigator.clipboard.writeText(a.copy),new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),1500))]);toast("Запрос скопирован: "+a.copy+" — вставьте его в строку поиска (Ctrl+V)",5000)}catch(e){toast("Скопируйте запрос вручную: "+a.copy,8000)}}addHist(qString(qParts())||"(без запроса)",s.name+" — "+a.label)})}
 function addHist(q,src){const h=LS.get("hist",[]);h.unshift({t:new Date().toISOString(),q,src});LS.set("hist",h.slice(0,200));renderHist()}
 function renderHist(){const h=LS.get("hist",[]);$("#histTbl tbody").innerHTML=h.length?h.map(x=>`<tr><td class="small">${fmtDate(x.t)}</td><td>${esc(x.q)}</td><td class="small">${esc(x.src)}</td></tr>`).join(""):`<tr><td colspan="3" class="muted">Пусто</td></tr>`}
 ["#qWords","#qPhrase","#qParties","#qNcn","#qCase","#qCourt"].forEach(id=>$(id).addEventListener("input",renderQ));
@@ -1270,12 +1270,12 @@ $("#cImport").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(
 /* =========================================================
    SERVER
    ========================================================= */
-function apiBase(){if(/^https?:$/.test(location.protocol)&&/^(127\.0\.0\.1|localhost)$/.test(location.hostname))return location.origin;return "http://127.0.0.1:"+(LS.get("port",8767))}
+function apiCandidates(){const c=[];if(/^https?:$/.test(location.protocol)&&/^(127\.0\.0\.1|localhost)$/.test(location.hostname))c.push(location.origin);const d="http://127.0.0.1:"+(LS.get("port",8767));if(!c.includes(d))c.push(d);return c}
 async function api(path,body){const opt=body===undefined?{}:{method:"POST",headers:{"Content-Type":"application/json","X-HKCL":"1"},body:JSON.stringify(body)};const r=await fetch(API+path,opt);let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw new Error(j.error||("HTTP "+r.status));return j}
 function setPill(dot,txt,cls,t){$(dot).className="dot "+(cls||"");$(txt).textContent=t}
 async function connect(){
-  API=apiBase();
-  try{SRV=await api("/api/status");CFG=await api("/api/config");
+  let found=null;for(const c of apiCandidates()){API=c;try{const s=await api("/api/status");if(s&&s.ok&&s.version){found=c;SRV=s;break}}catch(e){}}
+  try{if(!found)throw new Error("сервер не найден");CFG=await api("/api/config");
     setPill("#dSrv","#tSrv","ok","Сервер: подключён ("+API.replace("http://","")+")");
     $("#srvNeed").style.display="none";$("#srvNeed2").style.display="none";
     const loc=LS.get("custom_sources",[]);if(loc.length&&!(CFG.custom_sources||[]).length){CFG.custom_sources=loc;if(await saveCfg(["custom_sources"]))toast("Свои источники перенесены из браузера на сервер")}
