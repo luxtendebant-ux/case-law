@@ -83,7 +83,7 @@ footer{max-width:1200px;margin:0 auto;padding:8px 16px 30px;color:var(--muted);f
 <body>
 <header>
   <div class="hwrap">
-    <div class="brand"><b>HK Case Law Monitor v.1.0</b><span>Судебная практика Гонконга · частное некоммерческое использование</span></div>
+    <div class="brand"><b>HK Case Law Monitor v.1.0.2</b><span>Судебная практика Гонконга · частное некоммерческое использование</span></div>
     <div class="status">
       <span class="pill" title="Локальный сервер"><span class="dot" id="dSrv"></span><span id="tSrv">Сервер: проверка…</span></span>
       <span class="pill" title="Последняя проверка RSS"><span class="dot" id="dChk"></span><span id="tChk">RSS: —</span></span>
@@ -334,14 +334,14 @@ Linux/macOS (cron, ежедневно в 08:00):
   </div>
 </section>
 </main>
-<footer>HK Case Law Monitor v.1.0 · частное некоммерческое использование (private study and research). Судебные решения — © Правительство САР Гонконг; ссылки ведут на сайты источников.</footer>
+<footer>HK Case Law Monitor v.1.0.2 · частное некоммерческое использование (private study and research). Судебные решения — © Правительство САР Гонконг; ссылки ведут на сайты источников.</footer>
 <div id="toast"></div>
 
 <script type="text/plain" id="srv-py">
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-HK Case Law Monitor v.1.0 — локальный сервер.
+HK Case Law Monitor v.1.0.2 — локальный сервер.
 
 Назначение: частный некоммерческий мониторинг новых решений судов Гонконга
 по официальным RSS-лентам Legal Reference System (Судебная власть САР Гонконг),
@@ -382,7 +382,7 @@ from urllib import request as urlreq, error as urlerr
 from urllib.parse import urlparse, parse_qs
 from urllib.robotparser import RobotFileParser
 
-VERSION = "1.0"
+VERSION = "1.0.2"
 USER_AGENT = "HKCaseLawMonitor/1.0 (private non-commercial RSS reader)"
 ALLOWED_FEED_HOSTS = {"legalref.judiciary.hk", "www.hkcfa.hk", "www.judiciary.hk"}
 DEFAULT_ORIGINS = {"https://luxtendebant-ux.github.io"}
@@ -786,6 +786,21 @@ def build_digest(cfg, db, profile_ids=None, only_unsent=True):
     return out
 
 
+def plural(n, one, few, many):
+    n = abs(int(n)) % 100
+    if 11 <= n <= 14:
+        return many
+    n %= 10
+    return one if n == 1 else few if 2 <= n <= 4 else many
+
+
+def ru_date(iso):
+    try:
+        return datetime.fromisoformat(iso).astimezone(timezone(timedelta(hours=8))).strftime("%d.%m.%Y")
+    except Exception:
+        return (iso or "")[:10]
+
+
 def esc(s):
     return htmlmod.escape(s or "")
 
@@ -835,11 +850,12 @@ def send_digest(profile_ids=None, only_unsent=True, dry_run=False):
     parts_t, parts_h = [], []
     for pid, (p, rows) in dig.items():
         parts_t.append("\n== %s (%d) ==" % (p["name"], len(rows)))
-        parts_h.append("<h3 style='font:600 15px Arial;margin:18px 0 6px'>%s — %d</h3><table cellpadding='6' style='border-collapse:collapse;font:13px Arial'>" % (esc(p["name"]), len(rows)))
+        parts_h.append("<h3 style='font:600 15px Arial;margin:18px 0 6px'>%s — %d</h3><table cellpadding='6' style='border-collapse:collapse;font:13px Arial'>"
+                       "<tr style='border-bottom:2px solid #0f2a44;text-align:left'><th>Дата</th><th>Лента</th><th>Решение / реквизиты</th><th>Совпадения</th></tr>" % (esc(p["name"]), len(rows)))
         for it in rows:
-            d = (it.get("pub") or it.get("first_seen") or "")[:10]
+            d = ru_date(it.get("pub") or it.get("first_seen") or "")
             parts_t.append("- %s | %s | %s\n  %s" % (d, it.get("feed_name", ""), it.get("title", ""), it.get("link", "")))
-            parts_h.append("<tr style='border-bottom:1px solid #ddd'><td>%s</td><td>%s</td><td><a href='%s'>%s</a><br><span style='color:#666'>%s</span></td><td>%s</td></tr>" % (
+            parts_h.append("<tr style='border-bottom:1px solid #ddd;vertical-align:top'><td style='white-space:nowrap'>%s</td><td>%s</td><td><a href='%s'>%s</a><br><span style='color:#666'>%s</span></td><td>%s</td></tr>" % (
                 esc(d), esc(it.get("feed_name")), esc(it.get("link")), esc(it.get("title")),
                 esc(" · ".join(it.get("ncn", []) + it.get("actions", []))),
                 esc(", ".join((it.get("matches") or {}).get(pid, [])))))
@@ -847,7 +863,7 @@ def send_digest(profile_ids=None, only_unsent=True, dry_run=False):
     note = ("Источник: официальные RSS-ленты Legal Reference System, Судебная власть САР Гонконг. "
             "Только метаданные и ссылки; тексты решений — на сайте источника. "
             "Частное некоммерческое использование.")
-    subject = "HK Case Law: %d новых решений по профилям — %s" % (total, today)
+    subject = "HK Case Law: %d %s по профилям — %s" % (total, plural(total, "новое решение", "новых решения", "новых решений"), today)
     text = "Новые решения судов Гонконга по профилям поиска (%s)\n%s\n\n%s" % (today, "\n".join(parts_t), note)
     html_body = "<div style='font:13px Arial'><h2 style='font:600 17px Arial'>Новые решения судов Гонконга — %s</h2>%s<p style='color:#666;font-size:12px;margin-top:18px'>%s</p></div>" % (today, "".join(parts_h), esc(note))
     if dry_run:
@@ -895,7 +911,7 @@ def send_report(body, dry_run=False):
             "".join("<div style='border-left:2px solid #ccc;padding-left:8px;margin:4px 0;color:#333'>…%s…</div>" % esc(x) for x in snips)))
         txt.append("- %s [%s] %s | %s | %s" % (r.get("file"), "да" if r.get("ok") else "нет", r.get("court") or "", req, r.get("counts") or ""))
     note = "Отчёт сформирован HK Case Law Monitor по документам, загруженным оператором. Частное некоммерческое использование."
-    subject = "HK Case Law: анализ решений — %d из %d соответствуют — %s" % (n_ok, len(rows), today)
+    subject = "HK Case Law: анализ решений — %d из %d %s — %s" % (n_ok, len(rows), "соответствует" if n_ok % 10 == 1 and n_ok % 100 != 11 else "соответствуют", today)
     html_body = ("<div style='font:13px Arial'><h2 style='font:600 17px Arial'>Анализ решений — %s</h2><p>Запрос: <b>%s</b><br>Документов: %d, соответствуют: %d</p>"
                  "<table cellpadding='0' style='border-collapse:collapse;font:13px Arial;width:100%%'><tr>%s</tr>%s</table><p style='color:#666;font-size:12px;margin-top:18px'>%s</p></div>") % (
         today, esc(q or "—"), len(rows), n_ok, th, "".join(trs), esc(note))
@@ -1352,27 +1368,32 @@ async function extractText(file){const n=file.name.toLowerCase();
   if(n.endsWith(".pdf")){await loadScript(LIB.pdf);pdfjsLib.GlobalWorkerOptions.workerSrc=LIB.pdfw;const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;let out=[];for(let i=1;i<=pdf.numPages;i++){const pg=await pdf.getPage(i);const tc=await pg.getTextContent();out.push(tc.items.map(x=>x.str+(x.hasEOL?"\n":" ")).join(""))}return out.join("\n")}
   if(n.endsWith(".docx")){await loadScript(LIB.mammoth);const r=await mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});return r.value}
   const t=await file.text();if(/\.html?$/.test(n)){const d=new DOMParser().parseFromString(t,"text/html");d.querySelectorAll("script,style").forEach(x=>x.remove());d.querySelectorAll("p,div,br,li,tr,td,h1,h2,h3,h4,h5,h6,table").forEach(x=>x.after(d.createTextNode("\n")));return d.body?d.body.textContent.replace(/[ \t]+\n/g,"\n").replace(/\n{3,}/g,"\n\n"):t}return t}
-function meta(text){const head=text.slice(0,6000);const courts=[["COURT OF FINAL APPEAL","Court of Final Appeal"],["COURT OF APPEAL","Court of Appeal"],["COURT OF FIRST INSTANCE","Court of First Instance"],["DISTRICT COURT","District Court"],["FAMILY COURT","Family Court"],["LANDS TRIBUNAL","Lands Tribunal"],["COMPETITION TRIBUNAL","Competition Tribunal"],["MAGISTRATES","Magistrates' Courts"],["終審法院","終審法院"],["上訴法庭","上訴法庭"],["原訟法庭","原訟法庭"],["區域法院","區域法院"]];const up=head.toUpperCase();const court=(courts.find(c=>up.includes(c[0]))||[,""])[1];
+function cleanText(t){t=String(t||"").replace(/\r/g,"").replace(/\u00a0/g," ");const lone=(t.match(/^[ \t]*[A-V][ \t]*$/gm)||[]).length;if(lone>=10)t=t.replace(/^[ \t]*[A-V][ \t]*\n/gm,"");t=t.replace(/^[ \t]*-[ \t]*\d{1,4}[ \t]*-[ \t]*$/gm,"");return t.replace(/\n{3,}/g,"\n\n")}
+function termRe(w){w=String(w).trim();const fuzzy=w.replace(/\s+/g,"").length>=6;const body=[...w].map(c=>/\s/.test(c)?"\\s*":reEsc(c)).join(fuzzy?"\\s?":"");return new RegExp((/^[A-Za-z0-9]/.test(w)?"(?<![A-Za-z0-9])":"")+body,"gi")}
+const nz=c=>Object.entries(c).filter(([w,n])=>n>0);
+function meta(text){const head=text.slice(0,8000);const courts=[["COURT OF FINAL APPEAL","Court of Final Appeal"],["COURT OF APPEAL","Court of Appeal"],["COURT OF FIRST INSTANCE","Court of First Instance"],["DISTRICT COURT","District Court"],["FAMILY COURT","Family Court"],["LANDS TRIBUNAL","Lands Tribunal"],["COMPETITION TRIBUNAL","Competition Tribunal"],["MAGISTRATES","Magistrates' Courts"],["終審法院","終審法院"],["上訴法庭","上訴法庭"],["原訟法庭","原訟法庭"],["區域法院","區域法院"]];const up=head.toUpperCase().replace(/\s+/g," ");let court="",best=1e9;courts.forEach(c=>{const i=up.indexOf(c[0]);if(i>=0&&i<best){best=i;court=c[1]}});
   const ncn=uniq((head.match(NCN_RE)||[]).map(s=>s.replace(/\s+/g," ")));const acts=findActs(head);
-  const dm=head.match(/Date of (?:Judgment|Decision|Reasons for Judgment|Handing Down)\s*[:：]?\s*([0-9]{1,2}\s+[A-Za-z]+\s+[0-9]{4}|[0-9]{1,2}[\/.-][0-9]{1,2}[\/.-][0-9]{2,4})/i);
-  const bm=head.match(/(?:Before|Coram)\s*[:：]\s*([^\n]{3,200})/i);return{court,ncn,acts,date:dm?dm[1]:"",before:bm?bm[1].trim():""}}
-async function addFiles(files){$("#dInfo").textContent="Чтение файлов…";for(const f of files){try{const text=await extractText(f);DOCS.push({name:f.name,size:f.size,text,meta:meta(text)})}catch(e){DOCS.push({name:f.name,size:f.size,text:"",meta:{},error:e.message})}}$("#dInfo").textContent=`Загружено файлов: ${DOCS.length}`;runDocs()}
+  const DRX=lab=>new RegExp("Date\\s+of\\s+(?:"+lab+")\\s*[:：]?\\s*(?:(\\d\\s?\\d?)\\s+([A-Za-z]{3,9})\\s*,?\\s+(\\d\\s?\\d\\s?\\d\\s?\\d)|(\\d{1,2}[\\/.-]\\d{1,2}[\\/.-]\\d{2,4}))","i");
+  const fmt=m=>m?(m[4]||(m[1].replace(/\s/g,"")+" "+m[2]+" "+m[3].replace(/\s/g,""))):"";
+  let date=fmt(head.match(DRX("Judgment|Decision|Reasons\\s+for\\s+Judgment|Handing\\s+Down|Sentence|Verdict|Ruling")));if(!date){const hh=fmt(head.match(DRX("Hearing")));if(hh)date="слушание: "+hh}
+  const bm=head.match(/(?:Before|Coram)\s*[:：]\s*([^\n]{3,200})/i);return{court,ncn,acts,date,before:bm?bm[1].replace(/\s+/g," ").trim():""}}
+async function addFiles(files){$("#dInfo").textContent="Чтение файлов…";for(const f of files){try{const text=cleanText(await extractText(f));DOCS.push({name:f.name,size:f.size,text,meta:meta(text)})}catch(e){DOCS.push({name:f.name,size:f.size,text:"",meta:{},error:e.message})}}$("#dInfo").textContent=`Загружено файлов: ${DOCS.length}`;runDocs()}
 const drop=$("#drop");drop.onclick=()=>$("#fileIn").click();$("#fileIn").onchange=e=>{addFiles([...e.target.files]);e.target.value=""};
 ["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over")}));["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over")}));drop.addEventListener("drop",e=>addFiles([...e.dataTransfer.files]));
 function reEsc(s){return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}
 function docTerms(){const pid=$("#dProfile").value;if(pid){const p=getProfiles().find(x=>x.id===pid)||PROFS.find(x=>x.id===pid);if(p)return{any:p.any_words||[],all:p.all_words||[],ex:p.exclude_words||[],rx:p.case_regex||""}}const w=splitList($("#dQuery").value);return $("#dMode").value==="all"?{any:[],all:w,ex:[],rx:""}:{any:w,all:[],ex:[],rx:""}}
 function runDocs(){const T=docTerms(),ctx=+$("#dCtx").value||220;const terms=[...T.any,...T.all];
-  DRES=DOCS.map(d=>{const low=d.text.toLowerCase();let ok=true;if(T.ex.some(w=>low.includes(w.toLowerCase())))ok=false;if(T.all.some(w=>!low.includes(w.toLowerCase())))ok=false;if(T.any.length&&!T.any.some(w=>low.includes(w.toLowerCase())))ok=false;if(T.rx){try{if(!new RegExp(T.rx,"i").test(low))ok=false}catch(e){}}
-    const counts={},snips=[];terms.forEach(w=>{const re=new RegExp(reEsc(w),"gi");let m,c=0;while((m=re.exec(d.text))&&c<500){c++;if(snips.length<12){const a=Math.max(0,m.index-ctx),b=Math.min(d.text.length,m.index+w.length+ctx);snips.push({w,a,b,txt:d.text.slice(a,b)})}}counts[w]=c});
+  DRES=DOCS.map(d=>{const low=d.text.toLowerCase();const has=w=>termRe(w).test(d.text);let ok=true;if(T.ex.some(has))ok=false;if(T.all.some(w=>!has(w)))ok=false;if(T.any.length&&!T.any.some(has))ok=false;if(T.rx){try{if(!new RegExp(T.rx,"i").test(low))ok=false}catch(e){}}
+    const counts={},snips=[];terms.forEach(w=>{const re=termRe(w);let m,c=0;while((m=re.exec(d.text))&&c<2000){c++;if(snips.length<12&&!snips.some(s=>m.index>=s.a&&m.index<s.b)){const a=Math.max(0,m.index-ctx),b=Math.min(d.text.length,m.index+m[0].length+ctx);snips.push({w,a,b,txt:d.text.slice(a,b)})}if(!m[0].length)re.lastIndex++}counts[w]=c});
     return{d,ok:terms.length||T.rx?ok:true,counts,snips}});
   renderDocs()}
-function hl(txt,terms){let s=esc(txt);terms.filter(Boolean).forEach(w=>{s=s.replace(new RegExp(reEsc(esc(w)),"gi"),m=>`<mark>${m}</mark>`)});return s}
+function hl(txt,terms){let s=esc(txt);terms.filter(Boolean).forEach(w=>{s=s.replace(termRe(esc(w)),m=>`<mark>${m}</mark>`)});return s}
 function renderDocs(){const T=docTerms(),terms=[...T.any,...T.all];const rows=DRES.slice().sort((a,b)=>b.ok-a.ok);
-  $("#docTbl tbody").innerHTML=rows.length?rows.map(r=>{const m=r.d.meta||{};return `<tr><td><b>${esc(r.d.name)}</b><br><span class="small muted">${(r.d.size/1024).toFixed(0)} КБ · ${r.d.text.length.toLocaleString("ru-RU")} симв.</span>${r.d.error?`<div class="tag bad">${esc(r.d.error)}</div>`:""}<br>${r.ok?'<span class="tag ok">соответствует</span>':'<span class="tag">не соответствует</span>'}</td><td class="small">${esc(m.court||"—")}<br>${(m.ncn||[]).concat(m.acts||[]).map(x=>`<span class="tag">${esc(x)}</span>`).join("")}</td><td class="small">${esc(m.date||"—")}<br><span class="muted">${esc(m.before||"")}</span></td><td class="small">${Object.entries(r.counts).map(([w,c])=>`<span class="tag ${c?"acc":""}">${esc(w)}: ${c}</span>`).join("")}${r.snips.map(s=>`<div class="snip">…${hl(s.txt,terms)}…</div>`).join("")}</td></tr>`}).join(""):`<tr><td colspan="4" class="muted">Файлы не загружены</td></tr>`;
+  $("#docTbl tbody").innerHTML=rows.length?rows.map(r=>{const m=r.d.meta||{};return `<tr><td><b>${esc(r.d.name)}</b><br><span class="small muted">${(r.d.size/1024).toFixed(0)} КБ · ${r.d.text.length.toLocaleString("ru-RU")} симв.</span>${r.d.error?`<div class="tag bad">${esc(r.d.error)}</div>`:""}<br>${r.ok?'<span class="tag ok">соответствует</span>':'<span class="tag">не соответствует</span>'}</td><td class="small">${esc(m.court||"—")}<br>${(m.ncn||[]).concat(m.acts||[]).map(x=>`<span class="tag">${esc(x)}</span>`).join("")}</td><td class="small">${esc(m.date||"—")}<br><span class="muted">${esc(m.before||"")}</span></td><td class="small">${nz(r.counts).map(([w,c])=>`<span class="tag acc">${esc(w)}: ${c}</span>`).join("")}${Object.keys(r.counts).length>nz(r.counts).length?`<div class="muted" style="font-size:11px">не найдено: ${esc(Object.entries(r.counts).filter(([w,c])=>!c).map(([w])=>w).join("; "))}</div>`:""}${r.snips.map(s=>`<div class="snip">…${hl(s.txt,terms)}…</div>`).join("")}</td></tr>`}).join(""):`<tr><td colspan="4" class="muted">Файлы не загружены</td></tr>`;
   $("#dInfo").textContent=DOCS.length?`Файлов: ${DOCS.length}, соответствуют: ${DRES.filter(r=>r.ok).length}`:""}
 $("#dRun").onclick=runDocs;$("#dProfile").onchange=runDocs;$("#dClear").onclick=()=>{DOCS=[];DRES=[];renderDocs()};
-function docRows(){return DRES.map(r=>({"Файл":r.d.name,"Соответствует":r.ok?"да":"нет","Суд":r.d.meta?.court||"","NCN":(r.d.meta?.ncn||[]).join("; "),"Номера дел":(r.d.meta?.acts||[]).join("; "),"Дата":r.d.meta?.date||"","Состав":r.d.meta?.before||"","Совпадения":Object.entries(r.counts).map(([w,c])=>w+": "+c).join("; "),"Фрагменты":r.snips.map(s=>s.txt.replace(/\s+/g," ")).join(" | ")}))}
-function reportBody(dry){const T=docTerms();const pid=$("#dProfile").value;return{dry_run:dry,only_matching:$("#dOnlyOk").checked,query:pid?("профиль: "+profName(pid)):([...T.any,...T.all].join("; ")+($("#dMode").value==="all"?" (все слова)":"")),rows:DRES.map(r=>({file:r.d.name,ok:r.ok,court:r.d.meta?.court||"",ncn:r.d.meta?.ncn||[],acts:r.d.meta?.acts||[],date:r.d.meta?.date||"",before:r.d.meta?.before||"",counts:Object.entries(r.counts).map(([w,c])=>w+": "+c).join("; "),snippets:r.snips.map(s=>s.txt.replace(/\s+/g," ").trim())}))}}
+function docRows(){return DRES.map(r=>({"Файл":r.d.name,"Соответствует":r.ok?"да":"нет","Суд":r.d.meta?.court||"","NCN":(r.d.meta?.ncn||[]).join("; "),"Номера дел":(r.d.meta?.acts||[]).join("; "),"Дата":r.d.meta?.date||"","Состав":r.d.meta?.before||"","Совпадения":nz(r.counts).map(([w,c])=>w+": "+c).join("; "),"Фрагменты":r.snips.map(s=>s.txt.replace(/\s+/g," ")).join(" | ")}))}
+function reportBody(dry){const T=docTerms();const pid=$("#dProfile").value;return{dry_run:dry,only_matching:$("#dOnlyOk").checked,query:pid?("профиль: "+profName(pid)):([...T.any,...T.all].join("; ")+($("#dMode").value==="all"?" (все слова)":"")),rows:DRES.map(r=>({file:r.d.name,ok:r.ok,court:r.d.meta?.court||"",ncn:r.d.meta?.ncn||[],acts:r.d.meta?.acts||[],date:r.d.meta?.date||"",before:r.d.meta?.before||"",counts:nz(r.counts).map(([w,c])=>w+": "+c).join("; ")||"совпадений нет",snippets:r.snips.map(s=>s.txt.replace(/\s+/g," ").trim())}))}}
 $("#dMailPrev").onclick=async()=>{if(!CFG)return toast("Нет подключения к серверу");if(!DRES.length)return toast("Сначала загрузите файлы и выполните поиск");try{const r=await api("/api/report",reportBody(true));if(!r.preview_html){toast(r.message);return}showPreview("#docPrev",r)}catch(e){toast("Ошибка: "+e.message,8000)}};
 $("#dMail").onclick=async()=>{if(!CFG)return toast("Нет подключения к серверу");if(!DRES.length)return toast("Сначала загрузите файлы и выполните поиск");if(!confirm("Отправить отчёт по анализу решений получателям из вкладки «Рассылка»?"))return;try{const r=await api("/api/report",reportBody(false));toast(r.message,5000)}catch(e){toast("Ошибка: "+e.message,8000)}};
 $("#dCsv").onclick=()=>downloadCsv(docRows(),"hk_caselaw_documents");$("#dXlsx").onclick=()=>downloadXlsx(docRows(),"hk_caselaw_documents");$("#dPrint").onclick=()=>window.print();

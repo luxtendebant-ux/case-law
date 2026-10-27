@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-HK Case Law Monitor v.1.0 — локальный сервер.
+HK Case Law Monitor v.1.0.2 — локальный сервер.
 
 Назначение: частный некоммерческий мониторинг новых решений судов Гонконга
 по официальным RSS-лентам Legal Reference System (Судебная власть САР Гонконг),
@@ -42,7 +42,7 @@ from urllib import request as urlreq, error as urlerr
 from urllib.parse import urlparse, parse_qs
 from urllib.robotparser import RobotFileParser
 
-VERSION = "1.0"
+VERSION = "1.0.2"
 USER_AGENT = "HKCaseLawMonitor/1.0 (private non-commercial RSS reader)"
 ALLOWED_FEED_HOSTS = {"legalref.judiciary.hk", "www.hkcfa.hk", "www.judiciary.hk"}
 DEFAULT_ORIGINS = {"https://luxtendebant-ux.github.io"}
@@ -446,6 +446,21 @@ def build_digest(cfg, db, profile_ids=None, only_unsent=True):
     return out
 
 
+def plural(n, one, few, many):
+    n = abs(int(n)) % 100
+    if 11 <= n <= 14:
+        return many
+    n %= 10
+    return one if n == 1 else few if 2 <= n <= 4 else many
+
+
+def ru_date(iso):
+    try:
+        return datetime.fromisoformat(iso).astimezone(timezone(timedelta(hours=8))).strftime("%d.%m.%Y")
+    except Exception:
+        return (iso or "")[:10]
+
+
 def esc(s):
     return htmlmod.escape(s or "")
 
@@ -495,11 +510,12 @@ def send_digest(profile_ids=None, only_unsent=True, dry_run=False):
     parts_t, parts_h = [], []
     for pid, (p, rows) in dig.items():
         parts_t.append("\n== %s (%d) ==" % (p["name"], len(rows)))
-        parts_h.append("<h3 style='font:600 15px Arial;margin:18px 0 6px'>%s — %d</h3><table cellpadding='6' style='border-collapse:collapse;font:13px Arial'>" % (esc(p["name"]), len(rows)))
+        parts_h.append("<h3 style='font:600 15px Arial;margin:18px 0 6px'>%s — %d</h3><table cellpadding='6' style='border-collapse:collapse;font:13px Arial'>"
+                       "<tr style='border-bottom:2px solid #0f2a44;text-align:left'><th>Дата</th><th>Лента</th><th>Решение / реквизиты</th><th>Совпадения</th></tr>" % (esc(p["name"]), len(rows)))
         for it in rows:
-            d = (it.get("pub") or it.get("first_seen") or "")[:10]
+            d = ru_date(it.get("pub") or it.get("first_seen") or "")
             parts_t.append("- %s | %s | %s\n  %s" % (d, it.get("feed_name", ""), it.get("title", ""), it.get("link", "")))
-            parts_h.append("<tr style='border-bottom:1px solid #ddd'><td>%s</td><td>%s</td><td><a href='%s'>%s</a><br><span style='color:#666'>%s</span></td><td>%s</td></tr>" % (
+            parts_h.append("<tr style='border-bottom:1px solid #ddd;vertical-align:top'><td style='white-space:nowrap'>%s</td><td>%s</td><td><a href='%s'>%s</a><br><span style='color:#666'>%s</span></td><td>%s</td></tr>" % (
                 esc(d), esc(it.get("feed_name")), esc(it.get("link")), esc(it.get("title")),
                 esc(" · ".join(it.get("ncn", []) + it.get("actions", []))),
                 esc(", ".join((it.get("matches") or {}).get(pid, [])))))
@@ -507,7 +523,7 @@ def send_digest(profile_ids=None, only_unsent=True, dry_run=False):
     note = ("Источник: официальные RSS-ленты Legal Reference System, Судебная власть САР Гонконг. "
             "Только метаданные и ссылки; тексты решений — на сайте источника. "
             "Частное некоммерческое использование.")
-    subject = "HK Case Law: %d новых решений по профилям — %s" % (total, today)
+    subject = "HK Case Law: %d %s по профилям — %s" % (total, plural(total, "новое решение", "новых решения", "новых решений"), today)
     text = "Новые решения судов Гонконга по профилям поиска (%s)\n%s\n\n%s" % (today, "\n".join(parts_t), note)
     html_body = "<div style='font:13px Arial'><h2 style='font:600 17px Arial'>Новые решения судов Гонконга — %s</h2>%s<p style='color:#666;font-size:12px;margin-top:18px'>%s</p></div>" % (today, "".join(parts_h), esc(note))
     if dry_run:
@@ -555,7 +571,7 @@ def send_report(body, dry_run=False):
             "".join("<div style='border-left:2px solid #ccc;padding-left:8px;margin:4px 0;color:#333'>…%s…</div>" % esc(x) for x in snips)))
         txt.append("- %s [%s] %s | %s | %s" % (r.get("file"), "да" if r.get("ok") else "нет", r.get("court") or "", req, r.get("counts") or ""))
     note = "Отчёт сформирован HK Case Law Monitor по документам, загруженным оператором. Частное некоммерческое использование."
-    subject = "HK Case Law: анализ решений — %d из %d соответствуют — %s" % (n_ok, len(rows), today)
+    subject = "HK Case Law: анализ решений — %d из %d %s — %s" % (n_ok, len(rows), "соответствует" if n_ok % 10 == 1 and n_ok % 100 != 11 else "соответствуют", today)
     html_body = ("<div style='font:13px Arial'><h2 style='font:600 17px Arial'>Анализ решений — %s</h2><p>Запрос: <b>%s</b><br>Документов: %d, соответствуют: %d</p>"
                  "<table cellpadding='0' style='border-collapse:collapse;font:13px Arial;width:100%%'><tr>%s</tr>%s</table><p style='color:#666;font-size:12px;margin-top:18px'>%s</p></div>") % (
         today, esc(q or "—"), len(rows), n_ok, th, "".join(trs), esc(note))
