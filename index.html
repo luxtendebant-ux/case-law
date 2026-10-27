@@ -128,6 +128,26 @@ footer{max-width:1200px;margin:0 auto;padding:8px 16px 30px;color:var(--muted);f
     <p class="sub">Бесплатные базы — открываются сразу. Платные — нужна подписка; в них есть собственные сохранённые запросы с e-mail-оповещениями: полнотекстовый мониторинг без парсинга.</p>
     <div class="src" id="srcCards"></div>
   </div>
+  <div class="card" id="customCard">
+    <h2>Мои источники</h2>
+    <p class="sub">Добавьте любую базу судебной практики вручную. Шаблон поиска — адрес страницы результатов, где вместо запроса стоит <code>{q}</code>, например <code>https://www.example.org/search?query={q}</code>. Шаблон можно взять из адресной строки после любого поиска на сайте. Без <code>{q}</code> адрес просто откроется, а запрос скопируется в буфер. Если у источника есть официальная RSS-лента, её можно передать в мониторинг. Правила те же: только https, проверка robots.txt, решение оператора, HKLII исключён.</p>
+    <div class="grid">
+      <div><label for="cName">Название *</label><input type="text" id="cName" placeholder="Singapore eLitigation"></div>
+      <div><label for="cKind">Доступ</label><select id="cKind"><option value="free">бесплатно</option><option value="paid">подписка</option></select></div>
+      <div style="grid-column:span 2"><label for="cSearch">Шаблон поиска с {q} или адрес страницы поиска *</label><input type="text" id="cSearch" placeholder="https://…/search?q={q}"></div>
+      <div><label for="cHome">Главная страница</label><input type="text" id="cHome" placeholder="https://…"></div>
+      <div><label for="cRss">RSS-лента (необязательно)</label><input type="text" id="cRss" placeholder="https://…/rss.xml"></div>
+      <div style="grid-column:1/-1"><label for="cDesc">Описание: охват, условия использования</label><input type="text" id="cDesc" placeholder="Суды, годы, язык; условия использования"></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn pri" id="cAdd">Добавить источник</button>
+      <button class="btn sm" id="cCancel" style="display:none">Отменить правку</button>
+      <button class="btn sm" id="cExport">Экспорт JSON</button>
+      <button class="btn sm" id="cImportBtn">Импорт JSON</button><input type="file" id="cImport" accept=".json" hidden>
+      <span class="muted small" id="cWhere"></span>
+    </div>
+    <div class="tblwrap" style="margin-top:10px"><table class="tbl" id="cTbl"><thead><tr><th>Источник</th><th>Поиск</th><th>RSS</th><th></th></tr></thead><tbody></tbody></table></div>
+  </div>
   <div class="card">
     <h2>Журнал запросов</h2>
     <p class="sub">Хранится только в этом браузере.</p>
@@ -242,9 +262,16 @@ footer{max-width:1200px;margin:0 auto;padding:8px 16px 30px;color:var(--muted);f
       <button class="btn sm" id="dXlsx">XLSX</button>
       <button class="btn sm" id="dPrint">Печать / PDF</button>
       <button class="btn sm" id="dClear">Очистить</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="dMailPrev">Предпросмотр отчёта</button>
+      <button class="btn" id="dMail">Отправить отчёт по почте</button>
+      <label class="row small" style="margin:0;font-weight:400"><input type="checkbox" id="dOnlyOk" checked> только соответствующие документы</label>
+      <span class="muted small">Через SMTP из вкладки «4. Рассылка»; нужен локальный сервер</span>
       <span class="muted small" id="dInfo"></span>
     </div>
   </div>
+  <div id="docPrev"></div>
   <div class="card"><div class="tblwrap"><table class="tbl" id="docTbl"><thead><tr><th>Файл</th><th>Суд / реквизиты</th><th>Дата / состав</th><th>Совпадения</th></tr></thead><tbody></tbody></table></div></div>
 </section>
 
@@ -421,6 +448,8 @@ DEFAULT_CONFIG = {
     ],
     "smtp": {"host": "smtp.gmail.com", "port": 465, "security": "ssl", "user": "",
              "from": "", "to": []},
+    "custom_sources": [],
+    "extra_feed_hosts": [],
     "settings": {"auto_check_hours": 0, "auto_email": False, "retention_days": 365,
                  "min_interval_min": 10},
 }
@@ -474,15 +503,28 @@ def http_get(url, headers=None, timeout=30):
         return e.code, dict(e.headers or {}), b""
 
 
-def feed_url_ok(url):
+def clean_hosts(v):
+    out = []
+    for h in (v or []):
+        h = str(h).strip().lower()
+        h = re.sub(r"^https?://", "", h).split("/")[0].split(":")[0]
+        if h and "hklii" not in h and re.fullmatch(r"[a-z0-9.-]+\.[a-z]{2,}", h) and h not in out:
+            out.append(h)
+    return out
+
+
+def feed_url_ok(url, extra=None):
+    hosts = set(ALLOWED_FEED_HOSTS) | set(clean_hosts(extra if extra is not None else get_config().get("extra_feed_hosts")))
     try:
         u = urlparse(url)
     except Exception:
         return False, "некорректный URL"
-    if u.scheme != "https" and not (u.hostname in ALLOWED_FEED_HOSTS and u.hostname in ("127.0.0.1", "localhost")):
+    if u.scheme != "https" and not (u.hostname in hosts and u.hostname in ("127.0.0.1", "localhost")):
         return False, "допускается только https"
-    if u.hostname not in ALLOWED_FEED_HOSTS:
-        return False, "хост не в списке разрешённых: " + ", ".join(sorted(ALLOWED_FEED_HOSTS))
+    if "hklii" in (u.hostname or ""):
+        return False, "HKLII запрещает автоматический доступ"
+    if u.hostname not in hosts:
+        return False, "хост не в списке разрешённых: " + ", ".join(sorted(hosts))
     if "hklii" in (u.hostname or ""):
         return False, "HKLII запрещает автоматический доступ"
     return True, ""
@@ -527,7 +569,14 @@ def robots_status(url):
 
 NCN_RE = re.compile(r"\[(19|20)\d{2}\]\s*HK(?:CFAR|CFA|CA|CFI|DC|FC|LdT|CT|CrC|OAT|LaT|MagC|LRD|C)\s*\d{1,5}", re.I)
 ACTION_RE = re.compile(r"\b(?:FA|CA|HC|DC|FC|LD|KC|ES|KT|WK|FL|TM|ST|CT|LB|SC|OAT|MC)[A-Z]{1,4}\s?\d{1,6}[A-Z]?\s?/\s?(?:19|20)\d{2}\b")
+ACTION_NO_RE = re.compile(r"\b((?:FA|CA|HC|DC|FC|LD|KC|ES|KT|WK|FL|TM|ST|CT|LB|SC|OAT|MC)[A-Z]{1,4})\s+No\.?\s*(\d{1,6}[A-Z]?)\s+of\s+((?:19|20)\d{2})\b", re.I)
 TAG_RE = re.compile(r"<[^>]+>")
+
+
+def find_actions(text):
+    a = set(re.sub(r"\s+", "", m.group(0)) for m in ACTION_RE.finditer(text))
+    a |= set("%s%s/%s" % (m.group(1).upper(), m.group(2).upper(), m.group(3)) for m in ACTION_NO_RE.finditer(text))
+    return sorted(a)
 
 
 def strip_html(s):
@@ -586,7 +635,7 @@ def parse_feed(body):
             "guid": guid, "title": title, "link": link, "description": desc[:2000],
             "pub_raw": pub, "pub": parse_date(pub),
             "ncn": sorted(set(m.group(0) for m in NCN_RE.finditer(blob))),
-            "actions": sorted(set(re.sub(r"\s+", "", m.group(0)) for m in ACTION_RE.finditer(blob))),
+            "actions": find_actions(blob),
         })
     return items
 
@@ -646,7 +695,7 @@ def check_feeds(force=False):
         fid = f.get("id")
         fs = db["feeds"].setdefault(fid, {})
         res = {"id": fid, "name": f.get("name"), "status": "", "new": 0}
-        ok, why = feed_url_ok(f.get("url", ""))
+        ok, why = feed_url_ok(f.get("url", ""), cfg.get("extra_feed_hosts"))
         if not f.get("enabled", True):
             res["status"] = "отключена"
         elif not ok:
@@ -818,6 +867,46 @@ def send_digest(profile_ids=None, only_unsent=True, dry_run=False):
     return {"sent": total, "message": "Отправлено позиций: %d" % total}
 
 
+def send_report(body, dry_run=False):
+    """Отчёт по анализу загруженных решений (вкладка 5). Данные приходят со страницы."""
+    rows = body.get("rows") or []
+    if not isinstance(rows, list) or not rows:
+        return {"sent": 0, "message": "Нет результатов для отправки"}
+    rows = rows[:300]
+    only = bool(body.get("only_matching"))
+    if only:
+        rows = [r for r in rows if r.get("ok")]
+        if not rows:
+            return {"sent": 0, "message": "Нет соответствующих документов"}
+    q = str(body.get("query") or "")[:500]
+    today = datetime.now().strftime("%d.%m.%Y")
+    n_ok = sum(1 for r in rows if r.get("ok"))
+    th = "".join("<th align='left' style='border-bottom:2px solid #0f2a44;padding:6px'>%s</th>" % h for h in
+                 ("Документ", "Суд / реквизиты", "Дата / состав", "Совпадения и фрагменты"))
+    trs, txt = [], []
+    for r in rows:
+        snips = [str(x)[:700] for x in (r.get("snippets") or [])[:6]]
+        req = " · ".join([str(x) for x in (r.get("ncn") or []) + (r.get("acts") or [])][:12])
+        trs.append("<tr style='border-bottom:1px solid #ddd;vertical-align:top'><td style='padding:6px'><b>%s</b><br><span style='color:%s'>%s</span></td><td style='padding:6px'>%s<br><span style='color:#666'>%s</span></td><td style='padding:6px'>%s<br><span style='color:#666'>%s</span></td><td style='padding:6px'>%s%s</td></tr>" % (
+            esc(str(r.get("file", ""))[:200]), "#1d7a3e" if r.get("ok") else "#888",
+            "соответствует" if r.get("ok") else "не соответствует",
+            esc(str(r.get("court") or "—")), esc(req), esc(str(r.get("date") or "—")), esc(str(r.get("before") or "")[:300]),
+            esc(str(r.get("counts") or "")),
+            "".join("<div style='border-left:2px solid #ccc;padding-left:8px;margin:4px 0;color:#333'>…%s…</div>" % esc(x) for x in snips)))
+        txt.append("- %s [%s] %s | %s | %s" % (r.get("file"), "да" if r.get("ok") else "нет", r.get("court") or "", req, r.get("counts") or ""))
+    note = "Отчёт сформирован HK Case Law Monitor по документам, загруженным оператором. Частное некоммерческое использование."
+    subject = "HK Case Law: анализ решений — %d из %d соответствуют — %s" % (n_ok, len(rows), today)
+    html_body = ("<div style='font:13px Arial'><h2 style='font:600 17px Arial'>Анализ решений — %s</h2><p>Запрос: <b>%s</b><br>Документов: %d, соответствуют: %d</p>"
+                 "<table cellpadding='0' style='border-collapse:collapse;font:13px Arial;width:100%%'><tr>%s</tr>%s</table><p style='color:#666;font-size:12px;margin-top:18px'>%s</p></div>") % (
+        today, esc(q or "—"), len(rows), n_ok, th, "".join(trs), esc(note))
+    text = "Анализ решений — %s\nЗапрос: %s\n\n%s\n\n%s" % (today, q, "\n".join(txt), note)
+    if dry_run:
+        return {"sent": 0, "preview_subject": subject, "preview_html": html_body, "count": len(rows)}
+    send_mail(subject, text, html_body)
+    log("Отчёт анализа отправлен: %d документов" % len(rows))
+    return {"sent": len(rows), "message": "Отчёт отправлен: документов %d" % len(rows)}
+
+
 def scheduler():
     while True:
         hours = float(STATE.get("auto_check_hours") or 0)
@@ -919,7 +1008,7 @@ class Handler(BaseHTTPRequestHandler):
                     "matches": sum(1 for v in db["items"].values() if v.get("matches")),
                     "smtp_configured": bool(cfg["smtp"].get("host") and _norm_list(cfg["smtp"].get("to"))),
                     "password_set": bool(get_secret().get("smtp_password")),
-                    "data_dir": data_dir(), "allowed_hosts": sorted(ALLOWED_FEED_HOSTS),
+                    "data_dir": data_dir(), "allowed_hosts": sorted(set(ALLOWED_FEED_HOSTS) | set(clean_hosts(cfg.get("extra_feed_hosts")))),
                     "user_agent": USER_AGENT, "summary": STATE["last_check_summary"]})
             if u.path == "/api/config":
                 cfg = get_config()
@@ -949,12 +1038,18 @@ class Handler(BaseHTTPRequestHandler):
             body = self._body()
             if u.path == "/api/config":
                 cfg = get_config()
-                for k in ("feeds", "profiles", "smtp", "settings"):
+                for k in ("feeds", "profiles", "smtp", "settings", "custom_sources", "extra_feed_hosts"):
                     if k in body:
                         cfg[k] = body[k]
+                cfg["extra_feed_hosts"] = clean_hosts(cfg.get("extra_feed_hosts"))
+                for cs in cfg.get("custom_sources") or []:
+                    for key in ("search", "home", "rss"):
+                        v = str(cs.get(key) or "").strip()
+                        if v and not re.match(r"^https?://", v, re.I):
+                            return self._json({"error": "Источник «%s»: адрес должен начинаться с http(s)://" % cs.get("name")}, 400)
                 for f in cfg["feeds"]:
                     f.setdefault("id", "f_" + uuid.uuid4().hex[:8])
-                    good, why = feed_url_ok(f.get("url", ""))
+                    good, why = feed_url_ok(f.get("url", ""), cfg.get("extra_feed_hosts"))
                     if not good:
                         return self._json({"error": "Лента «%s»: %s" % (f.get("name"), why)}, 400)
                 for p in cfg["profiles"]:
@@ -989,6 +1084,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({"status": rs, "note": note})
             if u.path == "/api/digest":
                 return self._json(send_digest(body.get("profiles"), not body.get("all"), bool(body.get("dry_run"))))
+            if u.path == "/api/report":
+                return self._json(send_report(body, bool(body.get("dry_run"))))
             if u.path == "/api/test-email":
                 send_mail("HK Case Law Monitor: тестовое письмо",
                           "Тест SMTP-настроек прошёл успешно.",
@@ -1052,6 +1149,7 @@ if __name__ == "__main__":
 </script>
 <script>
 "use strict";
+let API=null, SRV=null, CFG=null, ITEMS=[], FEEDSTATE={};
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const LS={get(k,d){try{const v=localStorage.getItem("hkcl_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("hkcl_"+k,JSON.stringify(v))}catch(e){}}};
@@ -1072,6 +1170,8 @@ $$("nav button").forEach(b=>b.onclick=()=>{$$("nav button").forEach(x=>x.classLi
 const NCN_RE=/\[(?:19|20)\d{2}\]\s*HK(?:CFAR|CFA|CA|CFI|DC|FC|LdT|CT|CrC|OAT|LaT|MagC|LRD|C)\s*\d{1,5}/gi;
 const ACT_RE=/\b(?:FA|CA|HC|DC|FC|LD|KC|ES|KT|WK|FL|TM|ST|CT|LB|SC|OAT|MC)[A-Z]{1,4}\s?\d{1,6}[A-Z]?\s?\/\s?(?:19|20)\d{2}\b/g;
 const uniq=a=>[...new Set(a)];
+const ACT_NO_RE=/\b((?:FA|CA|HC|DC|FC|LD|KC|ES|KT|WK|FL|TM|ST|CT|LB|SC|OAT|MC)[A-Z]{1,4})\s+No\.?\s*(\d{1,6}[A-Z]?)\s+of\s+((?:19|20)\d{2})\b/gi;
+const findActs=t=>uniq([...(t.match(ACT_RE)||[]).map(s=>s.replace(/\s+/g,"")),...[...t.matchAll(ACT_NO_RE)].map(m=>m[1].toUpperCase()+m[2].toUpperCase()+"/"+m[3])]);
 
 /* =========================================================
    1. META SEARCH
@@ -1111,9 +1211,14 @@ const SOURCES=[
 ];
 
 function renderQ(){const p=qParts();const s=qString(p,{court:true});$("#qOut").textContent=s||"—";LS.set("q",{w:$("#qWords").value,ph:p.phrase,pa:p.parties,n:p.ncn,c:p.cas,co:p.court});renderSources(p)}
+function customList(){return (CFG?CFG.custom_sources:LS.get("custom_sources",[]))||[]}
+function customAsSource(c){return{id:"c_"+c.id,name:c.name,kind:c.kind||"free",custom:true,desc:c.desc||"",actions:p=>{const q=qString(p);const a=[];const tpl=c.search||c.home;
+  if(tpl&&tpl.includes("{q}"))a.push({label:"Искать",url:tpl.split("{q}").join(encodeURIComponent(q))});else if(tpl)a.push({label:"Открыть поиск",url:tpl,copy:q});
+  if(c.home&&c.home!==tpl)a.push({label:"Главная",url:c.home});return a}}}
+function allSources(){return SOURCES.concat(customList().map(customAsSource))}
 function renderSources(p){
-  $("#srcCards").innerHTML=SOURCES.map(s=>{const acts=s.actions(p);return `<div class="srcc"><div class="row" style="justify-content:space-between"><h4>${esc(s.name)}</h4><span class="tag ${s.kind==="free"?"ok":"warn"}">${s.kind==="free"?"бесплатно":"подписка"}</span></div><p>${esc(s.desc)}</p><div class="acts">${acts.map((a,i)=>`<button class="btn sm" data-src="${s.id}" data-i="${i}" title="${esc(a.copy?"Запрос будет скопирован в буфер обмена":(a.note||""))}">${esc(a.label)}${a.copy?" ⧉":""}</button>`).join("")}</div></div>`}).join("");
-  $$("#srcCards button").forEach(b=>b.onclick=async()=>{const s=SOURCES.find(x=>x.id===b.dataset.src);const a=s.actions(qParts())[+b.dataset.i];if(a.copy){try{await navigator.clipboard.writeText(a.copy);toast("Запрос скопирован: "+a.copy+" — вставьте его в строку поиска (Ctrl+V)",5000)}catch(e){toast("Скопируйте запрос вручную: "+a.copy,6000)}}window.open(a.url,"_blank","noopener");addHist(qString(qParts())||"(без запроса)",s.name+" — "+a.label)})}
+  $("#srcCards").innerHTML=allSources().map(s=>{const acts=s.actions(p);return `<div class="srcc"><div class="row" style="justify-content:space-between"><h4>${esc(s.name)}</h4><span>${s.custom?'<span class="tag acc">мой</span>':""}<span class="tag ${s.kind==="free"?"ok":"warn"}">${s.kind==="free"?"бесплатно":"подписка"}</span></span></div><p>${esc(s.desc)}</p><div class="acts">${acts.map((a,i)=>`<button class="btn sm" data-src="${s.id}" data-i="${i}" title="${esc(a.copy?"Запрос будет скопирован в буфер обмена":(a.note||""))}">${esc(a.label)}${a.copy?" ⧉":""}</button>`).join("")}</div></div>`}).join("");
+  $$("#srcCards button").forEach(b=>b.onclick=async()=>{const s=allSources().find(x=>x.id===b.dataset.src);const a=s.actions(qParts())[+b.dataset.i];if(a.copy){try{await navigator.clipboard.writeText(a.copy);toast("Запрос скопирован: "+a.copy+" — вставьте его в строку поиска (Ctrl+V)",5000)}catch(e){toast("Скопируйте запрос вручную: "+a.copy,6000)}}window.open(a.url,"_blank","noopener");addHist(qString(qParts())||"(без запроса)",s.name+" — "+a.label)})}
 function addHist(q,src){const h=LS.get("hist",[]);h.unshift({t:new Date().toISOString(),q,src});LS.set("hist",h.slice(0,200));renderHist()}
 function renderHist(){const h=LS.get("hist",[]);$("#histTbl tbody").innerHTML=h.length?h.map(x=>`<tr><td class="small">${fmtDate(x.t)}</td><td>${esc(x.q)}</td><td class="small">${esc(x.src)}</td></tr>`).join(""):`<tr><td colspan="3" class="muted">Пусто</td></tr>`}
 ["#qWords","#qPhrase","#qParties","#qNcn","#qCase","#qCourt"].forEach(id=>$(id).addEventListener("input",renderQ));
@@ -1122,10 +1227,33 @@ $("#qClear").onclick=()=>{["#qWords","#qPhrase","#qParties","#qNcn","#qCase"].fo
 $("#histClear").onclick=()=>{LS.set("hist",[]);renderHist()};
 (function(){const q=LS.get("q",null);if(q){$("#qWords").value=q.w||"";$("#qPhrase").value=q.ph||"";$("#qParties").value=q.pa||"";$("#qNcn").value=q.n||"";$("#qCase").value=q.c||"";$("#qCourt").value=q.co||""}renderQ();renderHist()})();
 
+/* ---------- custom sources ---------- */
+let CEDIT=null;
+function cFields(){return{name:$("#cName").value.trim(),kind:$("#cKind").value,search:$("#cSearch").value.trim(),home:$("#cHome").value.trim(),rss:$("#cRss").value.trim(),desc:$("#cDesc").value.trim()}}
+async function storeCustom(list,msg){if(CFG){const prev=CFG.custom_sources;CFG.custom_sources=list;if(!(await saveCfg(["custom_sources"]))){CFG.custom_sources=prev;return false}}else LS.set("custom_sources",list);renderCustom();renderQ();renderRef();if(msg)toast(msg);return true}
+function renderCustom(){const L=customList();$("#cWhere").textContent=CFG?"Хранение: на локальном сервере":"Хранение: в этом браузере";
+  $("#cTbl tbody").innerHTML=L.length?L.map((c,i)=>`<tr><td><b>${esc(c.name)}</b> <span class="tag ${c.kind==="free"?"ok":"warn"}">${c.kind==="free"?"бесплатно":"подписка"}</span><br><span class="small muted">${esc(c.desc||"")}</span></td><td class="small mono">${esc(c.search||c.home||"")}${(c.search||"").includes("{q}")?' <span class="tag ok">{q}</span>':""}</td><td class="small">${c.rss?`<span class="mono">${esc(c.rss)}</span><br><button class="btn sm" data-crss="${i}">В мониторинг</button>`:"—"}</td><td style="white-space:nowrap"><button class="btn sm" data-cedit="${i}">Изменить</button> <button class="btn sm" data-cdel="${i}">Удалить</button></td></tr>`).join(""):`<tr><td colspan="4" class="muted">Своих источников пока нет</td></tr>`;
+  $$("[data-cdel]").forEach(b=>b.onclick=()=>{const L=customList().slice();const c=L[+b.dataset.cdel];if(!confirm("Удалить источник «"+c.name+"»?"))return;L.splice(+b.dataset.cdel,1);storeCustom(L,"Источник удалён")});
+  $$("[data-cedit]").forEach(b=>b.onclick=()=>{const c=customList()[+b.dataset.cedit];CEDIT=c.id;$("#cName").value=c.name;$("#cKind").value=c.kind||"free";$("#cSearch").value=c.search||"";$("#cHome").value=c.home||"";$("#cRss").value=c.rss||"";$("#cDesc").value=c.desc||"";$("#cAdd").textContent="Сохранить изменения";$("#cCancel").style.display="";$("#cName").focus()});
+  $$("[data-crss]").forEach(b=>b.onclick=async()=>{const c=customList()[+b.dataset.crss];if(!CFG)return toast("Мониторинг требует локального сервера");let host;try{const u=new URL(c.rss);if(u.protocol!=="https:")throw 0;host=u.hostname}catch(e){return toast("RSS должна быть https-адресом",6000)}if(/hklii/i.test(host))return toast("HKLII запрещает автоматический доступ",6000);
+    if(CFG.feeds.some(f=>f.url===c.rss))return toast("Эта лента уже в мониторинге");
+    if(!confirm("Добавить хост "+host+" в список разрешённых и ленту «"+c.name+"» в мониторинг?\n\nПеред опросом будет проверен robots.txt; при запрете нужна ваша отметка «Допускаю опрос»."))return;
+    const eh=(CFG.extra_feed_hosts||[]).slice();if(!eh.includes(host))eh.push(host);CFG.extra_feed_hosts=eh;CFG.feeds.push({name:c.name,url:c.rss,enabled:true,robots_override:false});
+    if(await saveCfg(["extra_feed_hosts","feeds"])){renderFeeds();renderProfiles();toast("Лента добавлена в мониторинг (вкладка 2)")}else{CFG=await api("/api/config")}})}
+function cReset(){CEDIT=null;["#cName","#cSearch","#cHome","#cRss","#cDesc"].forEach(i=>$(i).value="");$("#cKind").value="free";$("#cAdd").textContent="Добавить источник";$("#cCancel").style.display="none"}
+$("#cCancel").onclick=cReset;
+$("#cAdd").onclick=async()=>{const f=cFields();if(!f.name||!(f.search||f.home))return toast("Укажите название и шаблон/адрес поиска",5000);
+  for(const k of ["search","home","rss"])if(f[k]&&!/^https?:\/\//i.test(f[k]))return toast("Адрес должен начинаться с http:// или https://",5000);
+  if(f.search&&f.search.includes("{q}")===false&&/[?&][^=]+=$/.test(f.search))toast("Подсказка: в конце адреса, вероятно, нужен {q}",5000);
+  const L=customList().slice();if(CEDIT){const i=L.findIndex(x=>x.id===CEDIT);if(i>=0)L[i]=Object.assign({},L[i],f)}else{if(L.some(x=>x.name.toLowerCase()===f.name.toLowerCase()))return toast("Источник с таким названием уже есть");L.push(Object.assign({id:Math.random().toString(36).slice(2,10)},f))}
+  if(await storeCustom(L,CEDIT?"Изменения сохранены":"Источник добавлен"))cReset()};
+$("#cExport").onclick=()=>{const L=customList();if(!L.length)return toast("Нет своих источников");dl(new Blob([JSON.stringify({format:"hkcl-sources",version:1,sources:L},null,1)],{type:"application/json"}),"hkcl_sources_"+stamp()+".json")};
+$("#cImportBtn").onclick=()=>$("#cImport").click();
+$("#cImport").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;try{const j=JSON.parse(await f.text());const src=(j.sources||j).filter(x=>x&&x.name&&(x.search||x.home));const L=customList().slice();let n=0;for(const x of src){if(L.some(y=>y.name.toLowerCase()===String(x.name).toLowerCase()))continue;L.push({id:Math.random().toString(36).slice(2,10),name:String(x.name),kind:x.kind==="paid"?"paid":"free",search:String(x.search||""),home:String(x.home||""),rss:String(x.rss||""),desc:String(x.desc||"")});n++}await storeCustom(L,"Импортировано источников: "+n)}catch(err){toast("Ошибка импорта: "+err.message,6000)}};
+
 /* =========================================================
    SERVER
    ========================================================= */
-let API=null, SRV=null, CFG=null, ITEMS=[], FEEDSTATE={};
 function apiBase(){if(/^https?:$/.test(location.protocol)&&/^(127\.0\.0\.1|localhost)$/.test(location.hostname))return location.origin;return "http://127.0.0.1:"+(LS.get("port",8767))}
 async function api(path,body){const opt=body===undefined?{}:{method:"POST",headers:{"Content-Type":"application/json","X-HKCL":"1"},body:JSON.stringify(body)};const r=await fetch(API+path,opt);let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw new Error(j.error||("HTTP "+r.status));return j}
 function setPill(dot,txt,cls,t){$(dot).className="dot "+(cls||"");$(txt).textContent=t}
@@ -1134,9 +1262,10 @@ async function connect(){
   try{SRV=await api("/api/status");CFG=await api("/api/config");
     setPill("#dSrv","#tSrv","ok","Сервер: подключён ("+API.replace("http://","")+")");
     $("#srvNeed").style.display="none";$("#srvNeed2").style.display="none";
-    updatePills();fillMail();renderFeeds();renderProfiles();await loadItems();
+    const loc=LS.get("custom_sources",[]);if(loc.length&&!(CFG.custom_sources||[]).length){CFG.custom_sources=loc;if(await saveCfg(["custom_sources"]))toast("Свои источники перенесены из браузера на сервер")}
+    updatePills();fillMail();renderFeeds();renderProfiles();renderCustom();renderQ();renderRef();await loadItems();
   }catch(e){SRV=null;CFG=null;setPill("#dSrv","#tSrv","bad","Сервер: не подключён");setPill("#dChk","#tChk","","RSS: нет сервера");setPill("#dMail","#tMail","","Рассылка: нет сервера");
-    $("#srvNeed").style.display="";$("#srvNeed2").style.display="";renderFeeds();renderProfiles()}
+    $("#srvNeed").style.display="";$("#srvNeed2").style.display="";renderFeeds();renderProfiles();renderCustom();renderQ();renderRef()}
 }
 function updatePills(){if(!SRV)return;setPill("#dChk","#tChk",SRV.last_check?"ok":"warn","RSS: "+(SRV.last_check?fmtDate(SRV.last_check):"ещё не проверялось")+(SRV.auto_check_hours?` · авто ${SRV.auto_check_hours} ч`:""));setPill("#dMail","#tMail",SRV.smtp_configured&&SRV.password_set?"ok":"warn","Рассылка: "+(SRV.smtp_configured?(SRV.password_set?"настроена":"нет пароля"):"не настроена"))}
 async function refreshStatus(){try{SRV=await api("/api/status");updatePills()}catch(e){}}
@@ -1203,11 +1332,12 @@ $("#pSave").onclick=commitProfiles;
 /* =========================================================
    4. MAIL
    ========================================================= */
+function showPreview(sel,r){$(sel).innerHTML=`<div class="card"><h3 style="margin-top:0">Тема: ${esc(r.preview_subject)}</h3><iframe sandbox="" style="width:100%;height:420px;border:1px solid var(--line);border-radius:8px;background:#fff" srcdoc="${esc(r.preview_html)}"></iframe></div>`}
 function fillMail(){if(!CFG)return;const s=CFG.smtp||{},st=CFG.settings||{};$("#sHost").value=s.host||"";$("#sPort").value=s.port||465;$("#sSec").value=s.security||"ssl";$("#sUser").value=s.user||"";$("#sFrom").value=s.from||"";$("#sTo").value=(s.to||[]).join("; ");$("#sPass").placeholder=CFG.password_set?"пароль сохранён — оставьте пустым":"не задан";$("#sAuto").value=st.auto_check_hours||0;$("#sMin").value=st.min_interval_min||10;$("#sRet").value=st.retention_days||365;$("#sAutoMail").checked=!!st.auto_email}
 async function saveMail(){if(!CFG){toast("Нет подключения к серверу");return false}CFG.smtp={host:$("#sHost").value.trim(),port:+$("#sPort").value||465,security:$("#sSec").value,user:$("#sUser").value.trim(),from:$("#sFrom").value.trim(),to:splitList($("#sTo").value)};CFG.settings=Object.assign(CFG.settings||{},{auto_check_hours:+$("#sAuto").value||0,min_interval_min:Math.max(5,+$("#sMin").value||10),retention_days:Math.max(7,+$("#sRet").value||365),auto_email:$("#sAutoMail").checked});const pw=$("#sPass").value;const ok=await saveCfg(["smtp","settings"],pw?{smtp_password:pw}:{});if(ok){$("#sPass").value="";fillMail()}return ok}
 $("#sSave").onclick=async()=>{if(await saveMail())toast("Настройки сохранены")};
 $("#sTest").onclick=async()=>{if(!(await saveMail()))return;try{const r=await api("/api/test-email",{});toast(r.message)}catch(e){toast("Ошибка: "+e.message,8000)}};
-$("#sPreview").onclick=async()=>{if(!CFG)return toast("Нет подключения к серверу");try{const r=await api("/api/digest",{dry_run:true});if(!r.preview_html){$("#digPrev").innerHTML=`<p class="muted">${esc(r.message)}</p>`;return}$("#digPrev").innerHTML=`<h3>Тема: ${esc(r.preview_subject)}</h3><iframe sandbox="" style="width:100%;height:420px;border:1px solid var(--line);border-radius:8px;background:#fff" srcdoc="${esc(r.preview_html)}"></iframe>`}catch(e){toast("Ошибка: "+e.message)}};
+$("#sPreview").onclick=async()=>{if(!CFG)return toast("Нет подключения к серверу");try{const r=await api("/api/digest",{dry_run:true});if(!r.preview_html){$("#digPrev").innerHTML=`<p class="muted">${esc(r.message)}</p>`;return}showPreview("#digPrev",r)}catch(e){toast("Ошибка: "+e.message)}};
 $("#sSend").onclick=async()=>{if(!CFG)return toast("Нет подключения к серверу");if(!confirm("Отправить дайджест получателям сейчас?"))return;try{const r=await api("/api/digest",{});toast(r.message,5000);loadItems()}catch(e){toast("Ошибка: "+e.message,8000)}};
 $("#sReset").onclick=async()=>{if(!CFG||!confirm("Сбросить отметки отправки у всех элементов?"))return;await api("/api/reset-sent",{});toast("Отметки сброшены");loadItems()};
 $("#sClearPw").onclick=async()=>{if(!CFG||!confirm("Удалить сохранённый SMTP-пароль?"))return;if(await saveCfg([],{clear_password:true})){fillMail();toast("Пароль удалён")}};
@@ -1223,7 +1353,7 @@ async function extractText(file){const n=file.name.toLowerCase();
   if(n.endsWith(".docx")){await loadScript(LIB.mammoth);const r=await mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});return r.value}
   const t=await file.text();if(/\.html?$/.test(n)){const d=new DOMParser().parseFromString(t,"text/html");d.querySelectorAll("script,style").forEach(x=>x.remove());d.querySelectorAll("p,div,br,li,tr,td,h1,h2,h3,h4,h5,h6,table").forEach(x=>x.after(d.createTextNode("\n")));return d.body?d.body.textContent.replace(/[ \t]+\n/g,"\n").replace(/\n{3,}/g,"\n\n"):t}return t}
 function meta(text){const head=text.slice(0,6000);const courts=[["COURT OF FINAL APPEAL","Court of Final Appeal"],["COURT OF APPEAL","Court of Appeal"],["COURT OF FIRST INSTANCE","Court of First Instance"],["DISTRICT COURT","District Court"],["FAMILY COURT","Family Court"],["LANDS TRIBUNAL","Lands Tribunal"],["COMPETITION TRIBUNAL","Competition Tribunal"],["MAGISTRATES","Magistrates' Courts"],["終審法院","終審法院"],["上訴法庭","上訴法庭"],["原訟法庭","原訟法庭"],["區域法院","區域法院"]];const up=head.toUpperCase();const court=(courts.find(c=>up.includes(c[0]))||[,""])[1];
-  const ncn=uniq((head.match(NCN_RE)||[]).map(s=>s.replace(/\s+/g," ")));const acts=uniq((head.match(ACT_RE)||[]).map(s=>s.replace(/\s+/g,"")));
+  const ncn=uniq((head.match(NCN_RE)||[]).map(s=>s.replace(/\s+/g," ")));const acts=findActs(head);
   const dm=head.match(/Date of (?:Judgment|Decision|Reasons for Judgment|Handing Down)\s*[:：]?\s*([0-9]{1,2}\s+[A-Za-z]+\s+[0-9]{4}|[0-9]{1,2}[\/.-][0-9]{1,2}[\/.-][0-9]{2,4})/i);
   const bm=head.match(/(?:Before|Coram)\s*[:：]\s*([^\n]{3,200})/i);return{court,ncn,acts,date:dm?dm[1]:"",before:bm?bm[1].trim():""}}
 async function addFiles(files){$("#dInfo").textContent="Чтение файлов…";for(const f of files){try{const text=await extractText(f);DOCS.push({name:f.name,size:f.size,text,meta:meta(text)})}catch(e){DOCS.push({name:f.name,size:f.size,text:"",meta:{},error:e.message})}}$("#dInfo").textContent=`Загружено файлов: ${DOCS.length}`;runDocs()}
@@ -1242,6 +1372,9 @@ function renderDocs(){const T=docTerms(),terms=[...T.any,...T.all];const rows=DR
   $("#dInfo").textContent=DOCS.length?`Файлов: ${DOCS.length}, соответствуют: ${DRES.filter(r=>r.ok).length}`:""}
 $("#dRun").onclick=runDocs;$("#dProfile").onchange=runDocs;$("#dClear").onclick=()=>{DOCS=[];DRES=[];renderDocs()};
 function docRows(){return DRES.map(r=>({"Файл":r.d.name,"Соответствует":r.ok?"да":"нет","Суд":r.d.meta?.court||"","NCN":(r.d.meta?.ncn||[]).join("; "),"Номера дел":(r.d.meta?.acts||[]).join("; "),"Дата":r.d.meta?.date||"","Состав":r.d.meta?.before||"","Совпадения":Object.entries(r.counts).map(([w,c])=>w+": "+c).join("; "),"Фрагменты":r.snips.map(s=>s.txt.replace(/\s+/g," ")).join(" | ")}))}
+function reportBody(dry){const T=docTerms();const pid=$("#dProfile").value;return{dry_run:dry,only_matching:$("#dOnlyOk").checked,query:pid?("профиль: "+profName(pid)):([...T.any,...T.all].join("; ")+($("#dMode").value==="all"?" (все слова)":"")),rows:DRES.map(r=>({file:r.d.name,ok:r.ok,court:r.d.meta?.court||"",ncn:r.d.meta?.ncn||[],acts:r.d.meta?.acts||[],date:r.d.meta?.date||"",before:r.d.meta?.before||"",counts:Object.entries(r.counts).map(([w,c])=>w+": "+c).join("; "),snippets:r.snips.map(s=>s.txt.replace(/\s+/g," ").trim())}))}}
+$("#dMailPrev").onclick=async()=>{if(!CFG)return toast("Нет подключения к серверу");if(!DRES.length)return toast("Сначала загрузите файлы и выполните поиск");try{const r=await api("/api/report",reportBody(true));if(!r.preview_html){toast(r.message);return}showPreview("#docPrev",r)}catch(e){toast("Ошибка: "+e.message,8000)}};
+$("#dMail").onclick=async()=>{if(!CFG)return toast("Нет подключения к серверу");if(!DRES.length)return toast("Сначала загрузите файлы и выполните поиск");if(!confirm("Отправить отчёт по анализу решений получателям из вкладки «Рассылка»?"))return;try{const r=await api("/api/report",reportBody(false));toast(r.message,5000)}catch(e){toast("Ошибка: "+e.message,8000)}};
 $("#dCsv").onclick=()=>downloadCsv(docRows(),"hk_caselaw_documents");$("#dXlsx").onclick=()=>downloadXlsx(docRows(),"hk_caselaw_documents");$("#dPrint").onclick=()=>window.print();
 
 /* ---------- export ---------- */
@@ -1261,7 +1394,8 @@ const REF=[
  ["Lexis+ Hong Kong (LexisNexis)","Hong Kong Cases (HKC) с 1842 г., HK Cases Unreported с 1905 г., HK Family Law Reports с 2005 г., ситатор CaseBase","Не указано","Тематические и поисковые e-mail-оповещения","Подписка","Ссылка; оповещения настраиваются в Lexis+"],
  ["vLex","С 1971 г., >100 000 дел: CFA, CA, CFI, DC, Family Court","Не указано для HK","E-mail-оповещения; API не заявлен","Подписка; часть страниц открыта на vlex.hk","Ссылка + поиск Google по vlex.hk"],
 ];
-$("#refTbl tbody").innerHTML=REF.map(r=>`<tr>${r.map((c,i)=>`<td class="${i?"small":""}">${i?esc(c):"<b>"+esc(c)+"</b>"}</td>`).join("")}</tr>`).join("");
+function renderRef(){$("#refTbl tbody").innerHTML=REF.map(r=>`<tr>${r.map((c,i)=>`<td class="${i?"small":""}">${i?esc(c):"<b>"+esc(c)+"</b>"}</td>`).join("")}</tr>`).join("")+customList().map(c=>`<tr><td><b>${esc(c.name)}</b> <span class="tag acc">мой</span></td><td class="small">${esc(c.desc||"—")}</td><td class="small">—</td><td class="small">${c.rss?"RSS: "+esc(c.rss):"—"}</td><td class="small">${c.kind==="paid"?"Подписка":"Бесплатно"}; добавлен оператором — условия проверяет оператор</td><td class="small">${(c.search||"").includes("{q}")?"Прямая ссылка поиска":"Ссылка + копирование запроса"}${c.rss?"; RSS по решению оператора":""}</td></tr>`).join("")}
+renderRef();
 const RL=[["Judiciary HK — Judgments (условия: private study and research)","https://www.judiciary.hk/en/judgments_legal_reference/judgments.html"],["LRS — подписка на RSS","https://legalref.judiciary.hk/lrs/common/rss/subscribe.jsp"],["HKCFA — RSS","https://www.hkcfa.hk/en/rss/index.html"],["HKLII — Legal (политика использования)","https://www.hklii.org/legal"],["HKU Libraries — Hong Kong law guide","https://libguides.lib.hku.hk/lawguide/hongkong"],["CUHK Library — Current awareness","https://libguides.lib.cuhk.edu.hk/law/infoguide/awareness"],["Thomson Reuters — Westlaw Hong Kong Content","https://www.thomsonreuters.com.hk/en/products-services/legal-overview/westlaw-hong-kong/content.html"],["LexisNexis HK — Alerts","https://www.lexisnexis.com/supportandtraining/hk/b/hk-resources/posts/alerts"],["vLex — Hong Kong law","https://vlex.com/hong-kong-law/"]];
 $("#refLinks").innerHTML=RL.map(([t,u])=>`<li><a href="${u}" target="_blank" rel="noopener">${esc(t)}</a></li>`).join("");
 

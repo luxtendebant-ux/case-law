@@ -108,6 +108,8 @@ DEFAULT_CONFIG = {
     ],
     "smtp": {"host": "smtp.gmail.com", "port": 465, "security": "ssl", "user": "",
              "from": "", "to": []},
+    "custom_sources": [],
+    "extra_feed_hosts": [],
     "settings": {"auto_check_hours": 0, "auto_email": False, "retention_days": 365,
                  "min_interval_min": 10},
 }
@@ -161,15 +163,28 @@ def http_get(url, headers=None, timeout=30):
         return e.code, dict(e.headers or {}), b""
 
 
-def feed_url_ok(url):
+def clean_hosts(v):
+    out = []
+    for h in (v or []):
+        h = str(h).strip().lower()
+        h = re.sub(r"^https?://", "", h).split("/")[0].split(":")[0]
+        if h and "hklii" not in h and re.fullmatch(r"[a-z0-9.-]+\.[a-z]{2,}", h) and h not in out:
+            out.append(h)
+    return out
+
+
+def feed_url_ok(url, extra=None):
+    hosts = set(ALLOWED_FEED_HOSTS) | set(clean_hosts(extra if extra is not None else get_config().get("extra_feed_hosts")))
     try:
         u = urlparse(url)
     except Exception:
         return False, "некорректный URL"
-    if u.scheme != "https" and not (u.hostname in ALLOWED_FEED_HOSTS and u.hostname in ("127.0.0.1", "localhost")):
+    if u.scheme != "https" and not (u.hostname in hosts and u.hostname in ("127.0.0.1", "localhost")):
         return False, "допускается только https"
-    if u.hostname not in ALLOWED_FEED_HOSTS:
-        return False, "хост не в списке разрешённых: " + ", ".join(sorted(ALLOWED_FEED_HOSTS))
+    if "hklii" in (u.hostname or ""):
+        return False, "HKLII запрещает автоматический доступ"
+    if u.hostname not in hosts:
+        return False, "хост не в списке разрешённых: " + ", ".join(sorted(hosts))
     if "hklii" in (u.hostname or ""):
         return False, "HKLII запрещает автоматический доступ"
     return True, ""
@@ -214,7 +229,14 @@ def robots_status(url):
 
 NCN_RE = re.compile(r"\[(19|20)\d{2}\]\s*HK(?:CFAR|CFA|CA|CFI|DC|FC|LdT|CT|CrC|OAT|LaT|MagC|LRD|C)\s*\d{1,5}", re.I)
 ACTION_RE = re.compile(r"\b(?:FA|CA|HC|DC|FC|LD|KC|ES|KT|WK|FL|TM|ST|CT|LB|SC|OAT|MC)[A-Z]{1,4}\s?\d{1,6}[A-Z]?\s?/\s?(?:19|20)\d{2}\b")
+ACTION_NO_RE = re.compile(r"\b((?:FA|CA|HC|DC|FC|LD|KC|ES|KT|WK|FL|TM|ST|CT|LB|SC|OAT|MC)[A-Z]{1,4})\s+No\.?\s*(\d{1,6}[A-Z]?)\s+of\s+((?:19|20)\d{2})\b", re.I)
 TAG_RE = re.compile(r"<[^>]+>")
+
+
+def find_actions(text):
+    a = set(re.sub(r"\s+", "", m.group(0)) for m in ACTION_RE.finditer(text))
+    a |= set("%s%s/%s" % (m.group(1).upper(), m.group(2).upper(), m.group(3)) for m in ACTION_NO_RE.finditer(text))
+    return sorted(a)
 
 
 def strip_html(s):
@@ -273,7 +295,7 @@ def parse_feed(body):
             "guid": guid, "title": title, "link": link, "description": desc[:2000],
             "pub_raw": pub, "pub": parse_date(pub),
             "ncn": sorted(set(m.group(0) for m in NCN_RE.finditer(blob))),
-            "actions": sorted(set(re.sub(r"\s+", "", m.group(0)) for m in ACTION_RE.finditer(blob))),
+            "actions": find_actions(blob),
         })
     return items
 
@@ -333,7 +355,7 @@ def check_feeds(force=False):
         fid = f.get("id")
         fs = db["feeds"].setdefault(fid, {})
         res = {"id": fid, "name": f.get("name"), "status": "", "new": 0}
-        ok, why = feed_url_ok(f.get("url", ""))
+        ok, why = feed_url_ok(f.get("url", ""), cfg.get("extra_feed_hosts"))
         if not f.get("enabled", True):
             res["status"] = "отключена"
         elif not ok:
@@ -505,6 +527,46 @@ def send_digest(profile_ids=None, only_unsent=True, dry_run=False):
     return {"sent": total, "message": "Отправлено позиций: %d" % total}
 
 
+def send_report(body, dry_run=False):
+    """Отчёт по анализу загруженных решений (вкладка 5). Данные приходят со страницы."""
+    rows = body.get("rows") or []
+    if not isinstance(rows, list) or not rows:
+        return {"sent": 0, "message": "Нет результатов для отправки"}
+    rows = rows[:300]
+    only = bool(body.get("only_matching"))
+    if only:
+        rows = [r for r in rows if r.get("ok")]
+        if not rows:
+            return {"sent": 0, "message": "Нет соответствующих документов"}
+    q = str(body.get("query") or "")[:500]
+    today = datetime.now().strftime("%d.%m.%Y")
+    n_ok = sum(1 for r in rows if r.get("ok"))
+    th = "".join("<th align='left' style='border-bottom:2px solid #0f2a44;padding:6px'>%s</th>" % h for h in
+                 ("Документ", "Суд / реквизиты", "Дата / состав", "Совпадения и фрагменты"))
+    trs, txt = [], []
+    for r in rows:
+        snips = [str(x)[:700] for x in (r.get("snippets") or [])[:6]]
+        req = " · ".join([str(x) for x in (r.get("ncn") or []) + (r.get("acts") or [])][:12])
+        trs.append("<tr style='border-bottom:1px solid #ddd;vertical-align:top'><td style='padding:6px'><b>%s</b><br><span style='color:%s'>%s</span></td><td style='padding:6px'>%s<br><span style='color:#666'>%s</span></td><td style='padding:6px'>%s<br><span style='color:#666'>%s</span></td><td style='padding:6px'>%s%s</td></tr>" % (
+            esc(str(r.get("file", ""))[:200]), "#1d7a3e" if r.get("ok") else "#888",
+            "соответствует" if r.get("ok") else "не соответствует",
+            esc(str(r.get("court") or "—")), esc(req), esc(str(r.get("date") or "—")), esc(str(r.get("before") or "")[:300]),
+            esc(str(r.get("counts") or "")),
+            "".join("<div style='border-left:2px solid #ccc;padding-left:8px;margin:4px 0;color:#333'>…%s…</div>" % esc(x) for x in snips)))
+        txt.append("- %s [%s] %s | %s | %s" % (r.get("file"), "да" if r.get("ok") else "нет", r.get("court") or "", req, r.get("counts") or ""))
+    note = "Отчёт сформирован HK Case Law Monitor по документам, загруженным оператором. Частное некоммерческое использование."
+    subject = "HK Case Law: анализ решений — %d из %d соответствуют — %s" % (n_ok, len(rows), today)
+    html_body = ("<div style='font:13px Arial'><h2 style='font:600 17px Arial'>Анализ решений — %s</h2><p>Запрос: <b>%s</b><br>Документов: %d, соответствуют: %d</p>"
+                 "<table cellpadding='0' style='border-collapse:collapse;font:13px Arial;width:100%%'><tr>%s</tr>%s</table><p style='color:#666;font-size:12px;margin-top:18px'>%s</p></div>") % (
+        today, esc(q or "—"), len(rows), n_ok, th, "".join(trs), esc(note))
+    text = "Анализ решений — %s\nЗапрос: %s\n\n%s\n\n%s" % (today, q, "\n".join(txt), note)
+    if dry_run:
+        return {"sent": 0, "preview_subject": subject, "preview_html": html_body, "count": len(rows)}
+    send_mail(subject, text, html_body)
+    log("Отчёт анализа отправлен: %d документов" % len(rows))
+    return {"sent": len(rows), "message": "Отчёт отправлен: документов %d" % len(rows)}
+
+
 def scheduler():
     while True:
         hours = float(STATE.get("auto_check_hours") or 0)
@@ -606,7 +668,7 @@ class Handler(BaseHTTPRequestHandler):
                     "matches": sum(1 for v in db["items"].values() if v.get("matches")),
                     "smtp_configured": bool(cfg["smtp"].get("host") and _norm_list(cfg["smtp"].get("to"))),
                     "password_set": bool(get_secret().get("smtp_password")),
-                    "data_dir": data_dir(), "allowed_hosts": sorted(ALLOWED_FEED_HOSTS),
+                    "data_dir": data_dir(), "allowed_hosts": sorted(set(ALLOWED_FEED_HOSTS) | set(clean_hosts(cfg.get("extra_feed_hosts")))),
                     "user_agent": USER_AGENT, "summary": STATE["last_check_summary"]})
             if u.path == "/api/config":
                 cfg = get_config()
@@ -636,12 +698,18 @@ class Handler(BaseHTTPRequestHandler):
             body = self._body()
             if u.path == "/api/config":
                 cfg = get_config()
-                for k in ("feeds", "profiles", "smtp", "settings"):
+                for k in ("feeds", "profiles", "smtp", "settings", "custom_sources", "extra_feed_hosts"):
                     if k in body:
                         cfg[k] = body[k]
+                cfg["extra_feed_hosts"] = clean_hosts(cfg.get("extra_feed_hosts"))
+                for cs in cfg.get("custom_sources") or []:
+                    for key in ("search", "home", "rss"):
+                        v = str(cs.get(key) or "").strip()
+                        if v and not re.match(r"^https?://", v, re.I):
+                            return self._json({"error": "Источник «%s»: адрес должен начинаться с http(s)://" % cs.get("name")}, 400)
                 for f in cfg["feeds"]:
                     f.setdefault("id", "f_" + uuid.uuid4().hex[:8])
-                    good, why = feed_url_ok(f.get("url", ""))
+                    good, why = feed_url_ok(f.get("url", ""), cfg.get("extra_feed_hosts"))
                     if not good:
                         return self._json({"error": "Лента «%s»: %s" % (f.get("name"), why)}, 400)
                 for p in cfg["profiles"]:
@@ -676,6 +744,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({"status": rs, "note": note})
             if u.path == "/api/digest":
                 return self._json(send_digest(body.get("profiles"), not body.get("all"), bool(body.get("dry_run"))))
+            if u.path == "/api/report":
+                return self._json(send_report(body, bool(body.get("dry_run"))))
             if u.path == "/api/test-email":
                 send_mail("HK Case Law Monitor: тестовое письмо",
                           "Тест SMTP-настроек прошёл успешно.",
