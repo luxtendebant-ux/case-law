@@ -8,7 +8,7 @@ RequestExecutionLevel user
 
 !define APPNAME "HK Case Law Monitor"
 !define APPID "HKCaseLawMonitor"
-!define VERSION "2.0.1"
+!define VERSION "2.0.2"
 !define PUBLISHER "Вяселев Руслан Равилевич / Vyaselev Ruslan Ravilevich"
 !define UNINSTKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPID}"
 !define RUNKEY "Software\Microsoft\Windows\CurrentVersion\Run"
@@ -21,8 +21,8 @@ InstallDir "$LOCALAPPDATA\Programs\${APPNAME}"
 InstallDirRegKey HKCU "Software\${APPID}" "InstallDir"
 BrandingText "${APPNAME} ${VERSION} — © 2026 Вяселев Р. Р."
 
-VIProductVersion "2.0.1.0"
-VIFileVersion "2.0.1.0"
+VIProductVersion "2.0.2.0"
+VIFileVersion "2.0.2.0"
 VIAddVersionKey /LANG=1049 "ProductName" "${APPNAME}"
 VIAddVersionKey /LANG=1049 "ProductVersion" "${VERSION}"
 VIAddVersionKey /LANG=1049 "FileVersion" "${VERSION}"
@@ -118,7 +118,7 @@ Section "Программа (обязательно)" SecMain
   CreateShortcut "$SMPROGRAMS\${APPNAME}\${APPNAME}.lnk" "$INSTDIR\HKCaseLawMonitor.exe" "" "$INSTDIR\HKCaseLawMonitor.exe" 0 SW_SHOWNORMAL "" "Поиск и мониторинг судебной практики Гонконга"
   CreateShortcut "$SMPROGRAMS\${APPNAME}\Лицензионное соглашение.lnk" "$INSTDIR\EULA.txt"
   CreateShortcut "$SMPROGRAMS\${APPNAME}\Краткое руководство.lnk" "$INSTDIR\README.txt"
-  CreateShortcut "$SMPROGRAMS\${APPNAME}\Удалить ${APPNAME}.lnk" "$INSTDIR\Uninstall.exe"
+  CreateShortcut "$SMPROGRAMS\${APPNAME}\Удалить ${APPNAME}.lnk" "$INSTDIR\Uninstall.exe" "" "$INSTDIR\Uninstall.exe" 0 SW_SHOWNORMAL "" "Удалить ${APPNAME} с этого компьютера"
 
   ; .NET Framework 4.7.2+ (нужен окну программы)
   ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full" "Release"

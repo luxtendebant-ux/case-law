@@ -503,6 +503,31 @@ def r_open_url(h, body, qs, actor):
     return {"ok": True}
 
 
+def uninstaller_path():
+    p = os.path.join(automation.install_dir(), "Uninstall.exe")
+    return p if os.path.isfile(p) else None
+
+
+@route("GET", "/api/v1/app/uninstall", "read", "Доступность удаления программы", ui_only=True)
+def r_uninstall_info(h, body, qs, actor):
+    return {"available": bool(uninstaller_path()), "install_dir": automation.install_dir(), "data_dir": S.data_dir()}
+
+
+@route("POST", "/api/v1/app/uninstall", "operator", "Запустить удаление программы", ui_only=True)
+def r_uninstall(h, body, qs, actor):
+    exe = uninstaller_path()
+    if not exe:
+        raise UserError("Программа запущена не из установленной копии: модуль удаления (Uninstall.exe) не найден")
+    import subprocess
+    S.audit(actor, "app.uninstall", {"exe": exe})
+    # мастер удаления сам предложит удалить данные; программа завершается, чтобы освободить файлы
+    subprocess.Popen([exe], cwd=os.path.dirname(exe), close_fds=True,
+                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                     creationflags=getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0))
+    threading.Timer(1.0, lambda: (SERVER["on_shutdown"] or shutdown)()).start()
+    return {"ok": True, "message": "Запущен мастер удаления; программа завершается"}
+
+
 @route("POST", "/api/v1/shutdown", "operator", "Завершить программу", ui_only=False)
 def r_shutdown(h, body, qs, actor):
     S.audit(actor, "app.shutdown", {})

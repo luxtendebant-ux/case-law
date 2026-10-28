@@ -1,11 +1,12 @@
-# HK Case Law Monitor 2.0.1 для Windows
+# HK Case Law Monitor 2.0.2 для Windows
 
 © 2026 Вяселев Руслан Равилевич / Vyaselev Ruslan Ravilevich. Бесплатно для частного некоммерческого использования (лицензионное соглашение — в установщике и в `src/app/web/legal/EULA.txt`).
 
-**Скачать:** [HKCaseLawMonitor-Setup-2.0.1.exe](https://luxtendebant-ux.github.io/case-law/program/HKCaseLawMonitor-Setup-2.0.1.exe) (14507202 байт)
-SHA-256: `8447239f3acc715c9b86b98a8060812aec1cbdbd30dce854b78bf00cf84a4e56`
+**Скачать:** [HKCaseLawMonitor-Setup-2.0.2.exe](https://luxtendebant-ux.github.io/case-law/program/HKCaseLawMonitor-Setup-2.0.2.exe) (14507372 байт)
+SHA-256: `ca49d2a65e93601855f5703b24a2d3f5bebb5975822497d64a089f0cdec3bad1`
 
 ## Изменения
+- 2.0.2 (28.10.2026): удаление программы из неё самой («О программе» → «Удалить программу…») и командой `hkcl.exe uninstall` (`--silent` — без вопросов, данные сохраняются).
 - 2.0.1 (28.10.2026): исправлен запуск окна (ошибка «Cannot find win-arm64» в 2.0.0); при любом сбое окна программа открывается в браузере и продолжит работу в области уведомлений; в окне включено контекстное меню (копировать/вставить). Устанавливается поверх 2.0.0, данные сохраняются.
 
 ## Требования
@@ -16,6 +17,14 @@ SHA-256: `8447239f3acc715c9b86b98a8060812aec1cbdbd30dce854b78bf00cf84a4e56`
 
 ## Возможности
 Поиск по базам (LRS, hkcfa.hk, HKLII, vLex, Westlaw, Lexis+, свои источники) и по собранной базе; мониторинг RSS-лент LRS; дела на контроле с хронологией, напоминаниями и письмами об изменениях; анализ решений (PDF/DOCX/HTML/TXT); ИИ-помощник (Claude, ChatGPT, OpenAI-совместимые API, локальные модели); ИИ-агент (MCP, REST API + OpenAPI, вебхуки, командная строка, журнал аудита); автоматизация (расписание, Планировщик заданий Windows, автозапуск).
+
+## Удаление
+- В программе: «О программе» → «Удалить программу…».
+- «Параметры Windows» → «Приложения» → HK Case Law Monitor → «Удалить».
+- Меню «Пуск» → HK Case Law Monitor → «Удалить HK Case Law Monitor».
+- Командная строка: `hkcl.exe uninstall` (`--silent` — без вопросов).
+
+Удаляются файлы программы, ярлыки, задача Планировщика заданий и автозапуск. Данные пользователя (`%APPDATA%\\HKCaseLawMonitor`) удаляются только по отдельному подтверждению в мастере.
 
 ## Подключение ИИ-агента
 - Claude Desktop (`claude_desktop_config.json`): `{"mcpServers": {"hk-case-law": {"command": "<папка программы>\\hkcl.exe", "args": ["mcp"]}}}`

@@ -50,6 +50,8 @@ def build_parser():
     dc.add_argument("path")
     sub.add_parser("token", help="показать токен API")
     sub.add_parser("shutdown", help="завершить запущенную программу")
+    un = sub.add_parser("uninstall", help="удалить программу (мастер удаления; --silent — без вопросов, данные сохраняются)")
+    un.add_argument("--silent", action="store_true")
     sub.add_parser("openapi", help="спецификация OpenAPI")
     sc = sub.add_parser("schedule", help="задача в Планировщике заданий Windows")
     sc.add_argument("action", choices=["install", "remove", "status"])
@@ -123,6 +125,23 @@ def main(argv=None):
                 except Exception:
                     pass
             out({"ok": True, "was_running": bool(port)})
+        elif a.cmd == "uninstall":
+            import os
+            import subprocess
+            from . import app, automation
+            exe = os.path.join(automation.install_dir(), "Uninstall.exe")
+            if not os.path.isfile(exe):
+                raise RuntimeError("Модуль удаления не найден: %s" % exe)
+            port = app.running_instance()
+            if port:
+                try:
+                    app.call_instance(port, "POST", "/api/v1/shutdown", {}, timeout=5)
+                except Exception:
+                    pass
+            subprocess.Popen([exe] + (["/S"] if a.silent else []), cwd=os.path.dirname(exe), close_fds=True,
+                             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                             creationflags=getattr(subprocess, "DETACHED_PROCESS", 0))
+            out({"ok": True, "message": "Запущено удаление программы" + (" (без вопросов, данные сохраняются)" if a.silent else "")})
         elif a.cmd == "token":
             out({"token": S.api_token()})
         elif a.cmd == "openapi":
