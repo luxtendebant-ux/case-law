@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HK Case Law Monitor</title>
+<!--HKCL_BOOT-->
+<style>
+:root{--bg:#f4f6f9;--panel:#fff;--ink:#14202e;--muted:#5b6b7c;--line:#d9e0e8;--brand:#0f2a44;--brand-ink:#fff;--accent:#0f7b8a;--accent-soft:#e3f3f5;--ok:#1d7a3e;--ok-soft:#e5f4ea;--warn:#a05a00;--warn-soft:#fdf1df;--bad:#b42318;--bad-soft:#fdeceb;--mark:#fff1a8;--code:#eef1f5;--side:#0f2a44;--side-ink:#cfd9e4;--side-on:#173c5f}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f151c;--panel:#17202a;--ink:#e6edf3;--muted:#93a4b5;--line:#2a3846;--brand:#0b1c2e;--accent:#4fb3c1;--accent-soft:#16323a;--ok:#5cc489;--ok-soft:#163323;--warn:#e7a54a;--warn-soft:#3a2b14;--bad:#f07a70;--bad-soft:#3d1c1a;--mark:#6b5d12;--code:#202c38;--side:#0b1520;--side-on:#16283a}}
+:root[data-theme="dark"]{--bg:#0f151c;--panel:#17202a;--ink:#e6edf3;--muted:#93a4b5;--line:#2a3846;--brand:#0b1c2e;--accent:#4fb3c1;--accent-soft:#16323a;--ok:#5cc489;--ok-soft:#163323;--warn:#e7a54a;--warn-soft:#3a2b14;--bad:#f07a70;--bad-soft:#3d1c1a;--mark:#6b5d12;--code:#202c38;--side:#0b1520;--side-on:#16283a}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 "Segoe UI",-apple-system,Roboto,Arial,sans-serif;display:flex}
+a{color:var(--accent)}
+aside{width:224px;flex:none;background:var(--side);color:var(--side-ink);display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
+aside .logo{padding:16px 16px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
+aside .logo b{display:block;color:#fff;font-size:15px}aside .logo span{font-size:11px;opacity:.7}
+aside nav{flex:1;overflow-y:auto;padding:8px 0}
+aside nav button{display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:0;color:var(--side-ink);text-align:left;padding:9px 16px;font:inherit;cursor:pointer;border-left:3px solid transparent}
+aside nav button:hover{background:rgba(255,255,255,.05)}aside nav button.on{background:var(--side-on);color:#fff;border-left-color:#4fb3c1;font-weight:600}
+aside nav .grp{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;opacity:.5;padding:12px 16px 4px}
+.cnt{background:#e7a54a;color:#1a1a1a;border-radius:999px;font-size:11px;padding:0 7px;font-weight:700}
+aside .foot{padding:10px 16px;font-size:11.5px;border-top:1px solid rgba(255,255,255,.08)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#8a97a6;margin-right:6px}.dot.ok{background:#3ccf7a}.dot.bad{background:#f0645a}.dot.warn{background:#f0b44a}
+main{flex:1;min-width:0;height:100vh;overflow-y:auto;padding:18px 22px 40px}
+section.tab{display:none;max-width:1250px}section.tab.on{display:block}
+h1{font-size:20px;margin:0 0 4px}.lead{color:var(--muted);margin:0 0 14px;font-size:13px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+.card h2{margin:0 0 6px;font-size:15px}.card h3{margin:14px 0 6px;font-size:13.5px}
+.sub{color:var(--muted);font-size:12.5px;margin:0 0 10px}
+.grid{display:grid;gap:10px 14px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:3px;font-weight:600}
+label.chk{display:flex;align-items:center;gap:6px;font-weight:400;color:var(--ink);font-size:13px;margin:0}
+input[type=text],input[type=number],input[type=password],input[type=date],input[type=time],select,textarea{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);font:inherit}
+textarea{min-height:60px;resize:vertical}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:7px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;font-weight:600;cursor:pointer;text-decoration:none;font-size:13px}
+.btn:hover{border-color:var(--accent)}.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}.btn.sm{padding:4px 9px;font-size:12px}.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.note{background:var(--accent-soft);border-left:3px solid var(--accent);padding:9px 12px;border-radius:6px;font-size:12.5px;margin:10px 0}
+.note.warn{background:var(--warn-soft);border-left-color:var(--warn)}.note.bad{background:var(--bad-soft);border-left-color:var(--bad)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}.tbl th{text-align:left;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);padding:6px 8px;white-space:nowrap}
+.tbl td{border-bottom:1px solid var(--line);padding:6px 8px;vertical-align:top}.tblwrap{overflow-x:auto}
+.tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;background:var(--code);color:var(--muted);margin:1px 3px 1px 0;white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}.tag.warn{background:var(--warn-soft);color:var(--warn)}.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.acc{background:var(--accent-soft);color:var(--accent)}
+.src{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px}
+.srcc{border:1px solid var(--line);border-radius:9px;padding:12px;background:var(--bg);display:flex;flex-direction:column;gap:8px}
+.srcc h4{margin:0;font-size:14px}.srcc p{margin:0;font-size:12.5px;color:var(--muted)}.srcc .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+code,.mono{font-family:Consolas,ui-monospace,monospace;font-size:12px;background:var(--code);padding:1px 5px;border-radius:4px;word-break:break-all}
+pre{background:var(--code);padding:10px;border-radius:7px;overflow-x:auto;font-size:12px;white-space:pre-wrap}
+mark{background:var(--mark);color:inherit}.snip{font-size:12.5px;border-left:2px solid var(--line);padding:2px 0 2px 8px;margin:4px 0}
+.muted{color:var(--muted)}.small{font-size:12px}
+.kpis{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 12px}.kpi{border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-width:130px;background:var(--panel)}
+.kpi b{display:block;font-size:20px}.kpi span{font-size:12px;color:var(--muted)}
+.drop{border:2px dashed var(--line);border-radius:10px;padding:20px;text-align:center;color:var(--muted);cursor:pointer}.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.split{display:grid;grid-template-columns:minmax(300px,1fr) 1.6fr;gap:14px}@media (max-width:1100px){.split{grid-template-columns:1fr}}
+.caseitem{padding:9px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;cursor:pointer;background:var(--bg)}.caseitem.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.tl{border-left:2px solid var(--line);margin-left:6px;padding-left:14px}.tl .ev{position:relative;margin-bottom:12px}.tl .ev:before{content:"";position:absolute;left:-20px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--accent)}
+.tl .ev.unseen:before{background:#e7a54a}.tl .ev .t{font-weight:600}.tl .ev .d{white-space:pre-wrap;font-size:12.5px;color:var(--muted)}
+.ai{background:var(--accent-soft);border:1px solid var(--line);border-radius:8px;padding:10px 12px;white-space:pre-wrap;font-size:13px}.ai:before{content:"Сгенерировано ИИ, требует проверки";display:block;font-size:11px;font-weight:700;color:var(--accent);margin-bottom:4px}
+#toast{position:fixed;right:16px;bottom:16px;max-width:460px;background:var(--brand);color:#fff;padding:10px 14px;border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.25);font-size:13px;display:none;z-index:50;white-space:pre-wrap}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:40}
+#modal .box{background:var(--panel);border-radius:10px;max-width:880px;width:92%;max-height:86vh;overflow:auto;padding:18px}
+@media print{aside,.noprint,#toast{display:none!important}main{height:auto;overflow:visible}section.tab{display:none!important}section.tab.on{display:block!important}.card{border:0}}
+</style>
+</head>
+<body>
+<aside class="noprint">
+  <div class="logo"><b>HK Case Law Monitor</b><span id="verLbl"></span></div>
+  <nav id="nav">
+    <div class="grp">Практика</div>
+    <button data-tab="search" class="on">Поиск</button>
+    <button data-tab="monitor">Мониторинг лент <span class="cnt" id="cMon" hidden></span></button>
+    <button data-tab="cases">Дела на контроле <span class="cnt" id="cCases" hidden></span></button>
+    <button data-tab="docs">Документы и анализ</button>
+    <div class="grp">Настройка</div>
+    <button data-tab="profiles">Профили поиска</button>
+    <button data-tab="mail">Рассылка</button>
+    <button data-tab="auto">Автоматизация</button>
+    <button data-tab="llm">ИИ-помощник</button>
+    <button data-tab="agent">ИИ-агент</button>
+    <div class="grp">Справка</div>
+    <button data-tab="sources">Источники</button>
+    <button data-tab="about">О программе</button>
+  </nav>
+  <div class="foot"><div><span class="dot" id="dAuto"></span><span id="tAuto">Автоматизация…</span></div><div class="muted" id="tNext"></div><button class="btn sm" id="themeBtn" style="margin-top:6px">Тема</button></div>
+</aside>
+<main>
+
+<!-- ============ ПОИСК ============ -->
+<section class="tab on" id="tab-search">
+  <h1>Поиск судебной практики</h1><p class="lead">Один запрос — во все базы. Бесплатные базы открываются в браузере, запрос подставляется в адрес или копируется в буфер обмена (Ctrl+V). Здесь же — поиск по собранной программой базе.</p>
+  <div class="card">
+    <div class="grid">
+      <div><label>Ключевые слова (через «;»)</label><input type="text" id="qWords" placeholder="sanctions; United Nations Sanctions"></div>
+      <div><label>Точная фраза</label><input type="text" id="qPhrase" placeholder="anti-suit injunction"></div>
+      <div><label>Стороны</label><input type="text" id="qParties" placeholder="RusChemAlliance"></div>
+      <div><label>Нейтральная ссылка (NCN)</label><input type="text" id="qNcn" placeholder="[2023] HKCFI 2409"></div>
+      <div><label>Номер дела</label><input type="text" id="qCase" placeholder="HCCT 19/2023"></div>
+      <div><label>Суд</label><select id="qCourt"><option value="">Все</option><option>Court of Final Appeal</option><option>Court of Appeal</option><option>Court of First Instance</option><option>District Court</option><option>Family Court</option><option>Lands Tribunal</option><option>Competition Tribunal</option><option>Magistrates' Courts</option></select></div>
+    </div>
+    <div class="row" style="margin-top:10px"><span class="muted small">Запрос:</span> <code id="qOut">—</code>
+      <button class="btn sm" id="qCopy">Копировать</button><button class="btn sm" id="qClear">Очистить</button>
+      <button class="btn sm" id="qExpand" title="Подобрать термины через подключённую LLM">ИИ: подобрать термины</button>
+      <button class="btn sm pri" id="qLocal">Искать в собранной базе</button></div>
+    <div id="qExpandOut"></div>
+  </div>
+  <div class="card" id="localCard" hidden><h2>Найдено в собранной базе</h2><div id="localRes"></div></div>
+  <div class="card"><h2>Базы</h2><p class="sub">Платные базы требуют подписки; в них есть собственные e-mail-оповещения по сохранённым запросам.</p><div class="src" id="srcCards"></div></div>
+  <div class="card"><h2>Мои источники</h2>
+    <p class="sub">Любая база с поиском. Шаблон — адрес страницы результатов, где вместо запроса стоит <code>{q}</code> (возьмите из адресной строки после любого поиска на сайте). Официальную RSS-ленту можно передать в мониторинг (https, проверка robots.txt, HKLII исключён).</p>
+    <div class="grid">
+      <div><label>Название *</label><input type="text" id="cName"></div>
+      <div><label>Доступ</label><select id="cKind"><option value="free">бесплатно</option><option value="paid">подписка</option></select></div>
+      <div style="grid-column:span 2"><label>Шаблон поиска с {q} или адрес поиска *</label><input type="text" id="cSearch" placeholder="https://…/search?q={q}"></div>
+      <div><label>Главная страница</label><input type="text" id="cHome"></div>
+      <div><label>RSS-лента</label><input type="text" id="cRss"></div>
+      <div style="grid-column:1/-1"><label>Описание: охват, условия</label><input type="text" id="cDesc"></div>
+    </div>
+    <div class="row" style="margin-top:10px"><button class="btn pri" id="cAdd">Добавить источник</button><button class="btn sm" id="cCancel" hidden>Отменить правку</button>
+      <button class="btn sm" id="cExport">Экспорт JSON</button><button class="btn sm" id="cImportBtn">Импорт JSON</button><input type="file" id="cImport" accept=".json" hidden></div>
+    <div class="tblwrap" style="margin-top:10px"><table class="tbl" id="cTbl"><thead><tr><th>Источник</th><th>Поиск</th><th>RSS</th><th></th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="card"><h2>Журнал запросов</h2><div class="tblwrap"><table class="tbl" id="histTbl"><thead><tr><th>Дата</th><th>Запрос</th><th>База</th></tr></thead><tbody></tbody></table></div><button class="btn sm" id="histClear" style="margin-top:8px">Очистить журнал</button></div>
+</section>
+
+<!-- ============ МОНИТОРИНГ ============ -->
+<section class="tab" id="tab-monitor">
+  <h1>Мониторинг лент</h1><p class="lead">Официальные RSS-ленты Legal Reference System по судам. Новые решения отбираются по профилям поиска и сверяются с делами на контроле.</p>
+  <div class="card"><h2>Ленты</h2>
+    <p class="sub">Адреса лент — на странице подписки LRS: <a href="#" data-ext="https://legalref.judiciary.hk/lrs/common/rss/subscribe.jsp">legalref.judiciary.hk/lrs/common/rss/subscribe.jsp</a>.</p>
+    <div class="tblwrap"><table class="tbl" id="feedTbl"><thead><tr><th>Вкл.</th><th>Лента</th><th>robots.txt</th><th>Решение оператора</th><th>Опрос</th><th>Статус</th><th></th></tr></thead><tbody></tbody></table></div>
+    <div class="grid" style="margin-top:10px"><div><label>Название</label><input type="text" id="fName" placeholder="Court of Appeal (CA)"></div><div style="grid-column:span 2"><label>URL ленты</label><input type="text" id="fUrl" placeholder="https://legalref.judiciary.hk/lrs/common/rss/….xml"></div></div>
+    <div class="row" style="margin-top:10px"><button class="btn" id="fAdd">Добавить ленту</button><button class="btn pri" id="chkNow">Проверить ленты сейчас</button><label class="chk"><input type="checkbox" id="chkForce"> игнорировать интервал</label></div>
+    <div class="note warn small">На 27.10.2026 robots.txt legalref.judiciary.hk: <code>User-Agent: *</code> / <code>Disallow: /</code> — запрет для программ на весь сайт, включая ленты. Ленты опубликованы Судебной властью для RSS-ридеров. Опрос возможен только по решению оператора — отметка «Допускаю опрос». Без неё мониторинг LRS не работает.</div>
+  </div>
+  <div class="card"><h2>Решения</h2><div class="kpis" id="monKpis"></div>
+    <div class="grid"><div><label>Профиль</label><select id="mProfile"></select></div><div><label>Лента</label><select id="mFeed"></select></div><div><label>Текст</label><input type="text" id="mText" placeholder="слово, номер дела, NCN"></div>
+      <div><label>Период</label><select id="mDays"><option value="0">Весь</option><option value="1">Сутки</option><option value="7" selected>7 дней</option><option value="30">30 дней</option><option value="90">90 дней</option></select></div></div>
+    <div class="row" style="margin:10px 0"><button class="btn sm" id="mReload">Обновить</button><button class="btn sm" id="mCsv">CSV</button><button class="btn sm" id="mXlsx">XLSX</button><button class="btn sm" id="mPrint">Печать / PDF</button></div>
+    <div class="tblwrap"><table class="tbl" id="itemTbl"><thead><tr><th>Дата</th><th>Лента</th><th>Решение</th><th>Реквизиты</th><th>Профили</th><th></th></tr></thead><tbody></tbody></table></div>
+  </div>
+</section>
+
+<!-- ============ ДЕЛА ============ -->
+<section class="tab" id="tab-cases">
+  <h1>Дела на контроле</h1><p class="lead">Программа сверяет каждое новое решение из лент и каждый загруженный документ с делами на контроле (номер дела, NCN, стороны, ключевые слова) и записывает события в хронологию. Новые события подсвечиваются, о них приходят уведомления и письма.</p>
+  <div class="row" style="margin-bottom:12px"><button class="btn pri" id="caseNew">+ Поставить дело на контроль</button><select id="caseFilter" style="width:auto"><option value="active">На контроле</option><option value="closed">Закрытые</option><option value="">Все</option></select>
+    <button class="btn sm" id="caseAlertPrev">Предпросмотр письма об изменениях</button><button class="btn sm" id="caseAlertSend">Отправить письмо об изменениях</button></div>
+  <div class="split"><div id="caseList"></div><div id="caseDetail"><div class="card muted">Выберите дело слева или поставьте новое на контроль.</div></div></div>
+</section>
+
+<!-- ============ ДОКУМЕНТЫ ============ -->
+<section class="tab" id="tab-docs">
+  <h1>Документы и анализ</h1><p class="lead">Загрузите решения (PDF, DOCX, HTML, TXT), сохранённые вручную с LRS, HKLII или из подписочных баз. Программа извлекает суд, NCN, номер дела, дату и состав, связывает документ с делами на контроле и ищет термины. Документы хранятся только на этом компьютере.</p>
+  <div class="card"><div class="drop" id="drop">Перетащите файлы сюда или нажмите для выбора<br><span class="small">PDF · DOCX · HTML · TXT, до 60 МБ</span><input type="file" id="fileIn" multiple accept=".pdf,.docx,.htm,.html,.txt" hidden></div>
+    <div class="grid" style="margin-top:12px"><div><label>Слова (через «;»)</label><input type="text" id="dQuery" placeholder="sanction; Cap. 537"></div><div><label>Режим</label><select id="dMode"><option value="any">Любое из слов</option><option value="all">Все слова</option></select></div>
+      <div><label>или профиль</label><select id="dProfile"></select></div><div><label>Контекст, символов</label><input type="number" id="dCtx" value="220"></div></div>
+    <div class="row" style="margin-top:10px"><button class="btn pri" id="dRun">Искать</button><button class="btn sm" id="dCsv">CSV</button><button class="btn sm" id="dXlsx">XLSX</button><button class="btn sm" id="dPrint">Печать / PDF</button>
+      <button class="btn sm" id="dMailPrev">Предпросмотр отчёта</button><button class="btn sm" id="dMail">Отправить отчёт</button><label class="chk"><input type="checkbox" id="dOnlyOk" checked> только соответствующие</label><span class="muted small" id="dInfo"></span></div>
+  </div>
+  <div id="docPrev"></div>
+  <div class="card"><div class="tblwrap"><table class="tbl" id="docTbl"><thead><tr><th>Документ</th><th>Суд / реквизиты</th><th>Дата / состав</th><th>Совпадения</th><th></th></tr></thead><tbody></tbody></table></div></div>
+</section>
+
+<!-- ============ ПРОФИЛИ ============ -->
+<section class="tab" id="tab-profiles">
+  <h1>Профили поиска</h1><p class="lead">Критерии отбора решений из лент и документов. Без учёта регистра; термины от 6 символов устойчивы к разрывам слов в PDF. Слова — через «;» или с новой строки.</p>
+  <div id="profList"></div><div class="row"><button class="btn" id="pAdd">+ Новый профиль</button><button class="btn pri" id="pSave">Сохранить профили</button></div>
+</section>
+
+<!-- ============ РАССЫЛКА ============ -->
+<section class="tab" id="tab-mail">
+  <h1>Рассылка</h1><p class="lead">Дайджест новых решений по профилям, письма об изменениях по делам на контроле, отчёты анализа документов.</p>
+  <div class="card"><h2>SMTP</h2><p class="sub">Gmail: smtp.gmail.com, 465, SSL, логин — адрес Gmail, пароль — пароль приложения Google. Пароль хранится на этом компьютере в зашифрованном виде (Windows DPAPI).</p>
+    <div class="grid"><div><label>Сервер</label><input type="text" id="sHost"></div><div><label>Порт</label><input type="number" id="sPort"></div><div><label>Защита</label><select id="sSec"><option value="ssl">SSL/TLS</option><option value="starttls">STARTTLS</option><option value="none">Нет</option></select></div>
+      <div><label>Логин</label><input type="text" id="sUser" autocomplete="off"></div><div><label>Пароль</label><input type="password" id="sPass" autocomplete="new-password"></div><div><label>Отправитель</label><input type="text" id="sFrom"></div>
+      <div style="grid-column:1/-1"><label>Получатели (через «;»)</label><input type="text" id="sTo"></div></div>
+    <div class="row" style="margin-top:10px"><button class="btn pri" id="sSave">Сохранить</button><button class="btn" id="sTest">Тестовое письмо</button><button class="btn sm danger" id="sClearPw">Удалить пароль</button></div></div>
+  <div class="card"><h2>Дайджест новых решений</h2><div class="row"><button class="btn" id="sPreview">Предпросмотр</button><button class="btn" id="sSend">Отправить сейчас</button><button class="btn sm" id="sReset">Сбросить отметки отправки</button></div><div id="digPrev"></div></div>
+</section>
+
+<!-- ============ АВТОМАТИЗАЦИЯ ============ -->
+<section class="tab" id="tab-auto">
+  <h1>Автоматизация</h1><p class="lead">Цикл: проверка лент → сверка с делами на контроле → напоминания → письмо об изменениях по делам → дайджест. Работает, пока программа запущена (в окне или в области уведомлений). Задача в Планировщике заданий Windows запускает цикл, даже если программа закрыта. Права администратора не нужны.</p>
+  <div class="kpis" id="autoKpis"></div>
+  <div class="card"><h2>Расписание</h2>
+    <div class="grid"><div><label class="chk"><input type="checkbox" id="aEnabled"> Автоматизация включена</label><label class="chk" style="margin-top:6px"><input type="checkbox" id="aPaused"> Приостановить</label></div>
+      <div><label>Режим</label><select id="aMode"><option value="daily">По дням и времени</option><option value="interval">Каждые N часов</option></select></div>
+      <div id="aTimesBox"><label>Время запуска (ЧЧ:ММ, через «;»)</label><input type="text" id="aTimes" placeholder="08:00; 14:00"></div>
+      <div id="aIntBox"><label>Интервал, часов</label><input type="number" id="aInt" min="0.25" step="0.25"></div></div>
+    <div style="margin-top:10px"><label>Дни недели</label><div class="row" id="aDays"></div></div>
+    <h3>Что делать в цикле</h3>
+    <div class="grid"><label class="chk"><input type="checkbox" id="aFeeds"> проверять ленты</label><label class="chk"><input type="checkbox" id="aReminders"> напоминания по делам</label><label class="chk"><input type="checkbox" id="aAlerts"> письмо об изменениях по делам</label><label class="chk"><input type="checkbox" id="aDigest"> дайджест по профилям</label><label class="chk"><input type="checkbox" id="aNotify"> уведомления Windows</label><label class="chk"><input type="checkbox" id="aLlmDocs"> ИИ-резюме новых документов</label></div>
+    <div class="row" style="margin-top:12px"><button class="btn pri" id="aSave">Сохранить</button><button class="btn" id="aRun">Запустить цикл сейчас</button></div></div>
+  <div class="card"><h2>Windows</h2><div class="grid">
+    <div><b>Задача в Планировщике заданий</b><p class="sub" id="wtStatus">—</p><div class="row"><button class="btn" id="wtInstall">Создать / обновить задачу</button><button class="btn sm danger" id="wtRemove">Удалить задачу</button></div></div>
+    <div><b>Автозапуск при входе в Windows</b><p class="sub" id="asStatus">—</p><div class="row"><button class="btn" id="asOn">Включить</button><button class="btn sm" id="asOff">Выключить</button></div></div>
+    <div><b>Окно</b><label class="chk"><input type="checkbox" id="stTray"> закрытие окна сворачивает в область уведомлений</label><label class="chk"><input type="checkbox" id="stMin"> запускаться свёрнутой</label><button class="btn sm" id="stSave" style="margin-top:6px">Сохранить</button></div></div></div>
+  <div class="card"><h2>Последний цикл</h2><pre id="lastCycle">—</pre></div>
+</section>
+
+<!-- ============ LLM ============ -->
+<section class="tab" id="tab-llm">
+  <h1>ИИ-помощник</h1><p class="lead">Подключение языковых моделей по API: Claude (Anthropic), ChatGPT (OpenAI) или любой OpenAI-совместимый сервис (DeepSeek, OpenRouter, Mistral, локальные Ollama и LM Studio). Используется для резюме решений, извлечения данных, ответов на вопросы по тексту, подбора терминов и справок по делам. Все ответы ИИ помечаются как требующие проверки.</p>
+  <div class="card"><div class="grid">
+    <div><label class="chk"><input type="checkbox" id="lEnabled"> ИИ-помощник включён</label></div>
+    <div><label>Провайдер</label><select id="lProv"><option value="anthropic">Anthropic (Claude)</option><option value="openai">OpenAI (ChatGPT)</option><option value="compatible">OpenAI-совместимый API</option></select></div>
+    <div><label>Модель</label><input type="text" id="lModel" placeholder="claude-sonnet-5-5"></div>
+    <div><label>Базовый адрес (для совместимого API)</label><input type="text" id="lBase" placeholder="http://localhost:11434/v1"></div>
+    <div><label>API-ключ</label><input type="password" id="lKey" autocomplete="new-password"></div>
+    <div><label>Макс. токенов ответа</label><input type="number" id="lMax"></div><div><label>Температура</label><input type="number" id="lTemp" step="0.1" min="0" max="2"></div><div><label>Тайм-аут, сек</label><input type="number" id="lTimeout"></div></div>
+    <label class="chk" style="margin-top:10px"><input type="checkbox" id="lConsent"> Я согласен, что тексты загруженных документов передаются выбранному сервису LLM для обработки</label>
+    <label class="chk"><input type="checkbox" id="lDigest"> Добавлять ИИ-резюме в дайджест (передаются только заголовки и аннотации из лент)</label>
+    <div class="row" style="margin-top:10px"><button class="btn pri" id="lSave">Сохранить</button><button class="btn" id="lTest">Проверить подключение</button><button class="btn sm danger" id="lClearKey">Удалить ключ</button></div>
+    <div class="note small">Ключ хранится на этом компьютере в зашифрованном виде (Windows DPAPI). Тексты документов уходят внешнему сервису только при включённом согласии; для локальных моделей (Ollama, LM Studio) данные не покидают компьютер.</div></div>
+  <div class="card"><h2>Журнал обращений к ИИ</h2><div class="tblwrap"><table class="tbl" id="llmHist"><thead><tr><th>Время</th><th>Задача</th><th>Модель</th><th>Кто</th><th>Итог</th></tr></thead><tbody></tbody></table></div></div>
+</section>
+
+<!-- ============ АГЕНТ ============ -->
+<section class="tab" id="tab-agent">
+  <h1>ИИ-агент</h1><p class="lead">Подключение автономного ИИ-агента: MCP-сервер (Claude Desktop, Claude Code и другие MCP-клиенты), REST API с токеном и спецификацией OpenAPI, вебхуки о событиях, командная строка. Все действия агента записываются в журнал аудита.</p>
+  <div class="card"><h2>Доступ</h2><div class="grid">
+    <div><label class="chk"><input type="checkbox" id="agEnabled"> Разрешить подключение агентов</label></div>
+    <div><label>Права агента</label><select id="agPerm"><option value="full">Полные (включая решения оператора)</option><option value="standard">Стандартные (без решений оператора и удаления)</option><option value="readonly">Только чтение</option></select></div>
+    <div><label class="chk"><input type="checkbox" id="agRobots"> Агент может принимать решение «Допускаю опрос» по robots.txt</label></div></div>
+    <div class="row" style="margin-top:10px"><button class="btn pri" id="agSave">Сохранить</button></div></div>
+  <div class="card"><h2>MCP (Model Context Protocol)</h2><p class="sub">Claude Desktop: Настройки → Developer → Edit Config, добавьте в <code>claude_desktop_config.json</code>:</p><pre id="mcpCfg">—</pre><div class="row"><button class="btn sm" id="mcpCopy">Копировать</button></div>
+    <p class="sub" style="margin-top:8px">Claude Code: <code id="mcpCc">—</code></p></div>
+  <div class="card"><h2>REST API</h2><div class="grid"><div><label>Адрес</label><code id="apiBase">—</code></div><div><label>OpenAPI</label><code id="apiSpec">—</code></div></div>
+    <label style="margin-top:10px">Токен (заголовок <code>Authorization: Bearer …</code>)</label><div class="row"><input type="password" id="apiTok" readonly style="max-width:520px"><button class="btn sm" id="tokShow">Показать</button><button class="btn sm" id="tokCopy">Копировать</button><button class="btn sm danger" id="tokRotate">Выпустить новый</button></div>
+    <p class="sub" style="margin-top:8px">Командная строка: <code id="cliHint">hkcl.exe --help</code></p></div>
+  <div class="card"><h2>Вебхуки</h2><p class="sub">POST JSON <code>{event, time, data}</code>; подпись — заголовок <code>X-HKCL-Signature: sha256=HMAC(секрет, тело)</code>. События: <span id="whEvents"></span>.</p>
+    <div class="tblwrap"><table class="tbl" id="whTbl"><thead><tr><th>Вкл.</th><th>URL</th><th>События</th><th></th></tr></thead><tbody></tbody></table></div>
+    <div class="grid" style="margin-top:8px"><div style="grid-column:span 2"><label>URL</label><input type="text" id="whUrl" placeholder="https://…/hook"></div><div><label>События (через «;», * — все)</label><input type="text" id="whEv" value="*"></div><div><label>Секрет подписи</label><input type="password" id="whSecret" placeholder="оставьте пустым, чтобы не менять"></div></div>
+    <div class="row" style="margin-top:8px"><button class="btn" id="whAdd">Добавить вебхук</button><button class="btn sm" id="whTest">Тестовое событие</button></div></div>
+  <div class="card"><h2>Журнал аудита</h2><div class="row" style="margin-bottom:8px"><select id="auActor" style="width:auto"><option value="">Все</option><option value="agent">Агент (REST)</option><option value="mcp">Агент (MCP)</option><option value="cli">Командная строка</option><option value="ui">Оператор</option><option value="scheduler">Расписание</option></select><button class="btn sm" id="auReload">Обновить</button></div>
+    <div class="tblwrap"><table class="tbl" id="auTbl"><thead><tr><th>Время</th><th>Кто</th><th>Действие</th><th>Детали</th></tr></thead><tbody></tbody></table></div></div>
+</section>
+
+<!-- ============ ИСТОЧНИКИ ============ -->
+<section class="tab" id="tab-sources">
+  <h1>Источники</h1><p class="lead">Проверено 26–27.10.2026 по официальным страницам и библиотечным гидам HKU и CUHK. Условия доступа меняются — сверяйтесь с сайтом источника.</p>
+  <div class="card"><div class="tblwrap"><table class="tbl" id="refTbl"><thead><tr><th>Источник</th><th>Охват</th><th>Обновление</th><th>Оповещения</th><th>Доступ и условия</th><th>В программе</th></tr></thead><tbody></tbody></table></div><h3>Подтверждающие страницы</h3><ul class="small" id="refLinks"></ul></div>
+</section>
+
+<!-- ============ О ПРОГРАММЕ ============ -->
+<section class="tab" id="tab-about">
+  <h1>О программе</h1>
+  <div class="card"><h2 id="abName">HK Case Law Monitor</h2><p id="abCopy"></p><p class="small muted">Бесплатно для частного некоммерческого использования. Программа не является юридической консультацией; итоговые решения принимает оператор.</p>
+    <div class="row"><button class="btn" id="abUpd">Проверить обновления</button><button class="btn" data-legal="EULA.txt">Лицензионное соглашение</button><button class="btn" data-legal="THIRD-PARTY-NOTICES.txt">Сторонние компоненты</button></div><div id="abUpdRes" class="small" style="margin-top:8px"></div></div>
+  <div class="card"><h2>Данные и настройки</h2><p class="small">Папка данных: <code id="abData"></code><br>Папка программы: <code id="abInst"></code></p>
+    <div class="grid"><div><label>Прокси для доступа в интернет</label><input type="text" id="stProxy" placeholder="http://proxy:3128"></div><div><label>Сертификат прокси (CA, путь к .pem)</label><input type="text" id="stCa"></div><div><label>Хранить решения, дней</label><input type="number" id="stRet"></div><div><label>Мин. интервал опроса ленты, мин</label><input type="number" id="stMinIv"></div></div>
+    <label class="chk" style="margin-top:8px"><input type="checkbox" id="stUpd"> Проверять обновления раз в сутки</label>
+    <div class="row" style="margin-top:10px"><button class="btn pri" id="stSave2">Сохранить</button><button class="btn" id="abFolder">Открыть папку данных</button><button class="btn" id="abBackup">Резервная копия</button></div></div>
+</section>
+</main>
+<div id="toast"></div>
+<div id="modal"><div class="box"><div class="row" style="justify-content:space-between"><h2 id="mTitle" style="margin:0"></h2><button class="btn sm" id="mClose">Закрыть</button></div><div id="mBody" style="margin-top:10px"></div></div></div>
+
+<script src="vendor/xlsx.full.min.js" defer></script>
+<script>
+"use strict";
+const B=window.HKCL||{token:"",version:"?"};
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LS={get(k,d){try{const v=localStorage.getItem("hkcl2_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("hkcl2_"+k,JSON.stringify(v))}catch(e){}}};
+function toast(m,ms){const t=$("#toast");t.textContent=m;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",ms||4000)}
+const split=v=>String(v||"").split(/[\n;]+/).map(x=>x.trim()).filter(Boolean);
+const fmtDT=iso=>{if(!iso)return"—";const d=new Date(iso);return isNaN(d)?iso:d.toLocaleDateString("ru-RU")+" "+d.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"})};
+const fmtD=iso=>{if(!iso)return"—";const d=new Date(iso);return isNaN(d)?iso:d.toLocaleDateString("ru-RU")};
+async function api(path,body,method){const o={method:method||(body===undefined?"GET":"POST"),headers:{"Authorization":"Bearer "+B.token,"X-HKCL-Actor":"ui"}};if(body!==undefined){o.headers["Content-Type"]="application/json";o.body=JSON.stringify(body)}
+  const r=await fetch("/api/v1"+path,o);let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw new Error(j.error||("HTTP "+r.status));return j}
+async function act(btn,fn,okMsg){const was=btn&&btn.textContent;try{if(btn){btn.disabled=true}const r=await fn();if(okMsg)toast(typeof okMsg==="function"?okMsg(r):okMsg);return r}catch(e){toast("Ошибка: "+e.message,8000)}finally{if(btn){btn.disabled=false}}}
+function openExt(u){window.open(u,"_blank","noopener")}
+document.addEventListener("click",e=>{const a=e.target.closest("[data-ext]");if(a){e.preventDefault();openExt(a.dataset.ext)}});
+function modal(title,html){$("#mTitle").textContent=title;$("#mBody").innerHTML=html;$("#modal").style.display="flex"}
+$("#mClose").onclick=()=>$("#modal").style.display="none";$("#modal").onclick=e=>{if(e.target.id==="modal")$("#modal").style.display="none"};
+function preview(sel,r){if(!r.preview_html){$(sel).innerHTML=`<div class="card muted">${esc(r.message||"Нет данных")}</div>`;return}$(sel).innerHTML=`<div class="card"><h3 style="margin-top:0">Тема: ${esc(r.preview_subject)}</h3><iframe sandbox="" style="width:100%;height:420px;border:1px solid var(--line);border-radius:8px;background:#fff" srcdoc="${esc(r.preview_html)}"></iframe></div>`}
+let CFG=null;
+$("#verLbl").textContent="версия "+B.version;
+
+/* theme */
+(function(){const t=LS.get("theme",null);if(t)document.documentElement.dataset.theme=t;$("#themeBtn").onclick=()=>{const cur=document.documentElement.dataset.theme||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");const n=cur==="dark"?"light":"dark";document.documentElement.dataset.theme=n;LS.set("theme",n)}})();
+
+/* nav */
+const LOADERS={};
+function go(tab){$$("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===tab));$$("section.tab").forEach(s=>s.classList.toggle("on",s.id==="tab-"+tab));LS.set("tab",tab);if(LOADERS[tab])LOADERS[tab]()}
+$$("#nav button").forEach(b=>b.onclick=()=>go(b.dataset.tab));
+
+/* export */
+function stamp(){const d=new Date(),p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`}
+function dl(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
+function csv(rows,base){if(!rows.length)return toast("Нет данных");const h=Object.keys(rows[0]),q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';dl(new Blob(["﻿"+[h.map(q).join(";"),...rows.map(r=>h.map(k=>q(r[k])).join(";"))].join("\r\n")],{type:"text/csv;charset=utf-8"}),`${base}_${stamp()}.csv`)}
+function xlsx(rows,base){if(!rows.length)return toast("Нет данных");if(!window.XLSX)return csv(rows,base);const ws=XLSX.utils.json_to_sheet(rows);ws["!cols"]=Object.keys(rows[0]).map(k=>({wch:Math.min(60,Math.max(10,k.length+2))}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Результаты");XLSX.writeFile(wb,`${base}_${stamp()}.xlsx`)}
+
+/* ===================== ПОИСК ===================== */
+function qParts(){return{words:$("#qWords").value,phrase:$("#qPhrase").value.trim(),parties:$("#qParties").value.trim(),ncn:$("#qNcn").value.trim(),case:$("#qCase").value.trim(),court:$("#qCourt").value}}
+let LINKS=null,_qT=null;
+async function renderQ(){const p=qParts();LS.set("q",p);clearTimeout(_qT);_qT=setTimeout(async()=>{try{LINKS=await api("/sources/links?"+new URLSearchParams(p));$("#qOut").textContent=LINKS.query||"—";renderSources()}catch(e){toast("Ошибка: "+e.message)}},150)}
+function renderSources(){if(!LINKS)return;$("#srcCards").innerHTML=LINKS.sources.map((s,si)=>`<div class="srcc"><div class="row" style="justify-content:space-between"><h4>${esc(s.name)}</h4><span>${s.custom?'<span class="tag acc">мой</span>':""}<span class="tag ${s.kind==="free"?"ok":"warn"}">${s.kind==="free"?"бесплатно":"подписка"}</span></span></div><p>${esc(s.desc)}</p><div class="acts">${s.actions.map((a,i)=>`<button class="btn sm" data-s="${si}" data-i="${i}" title="${a.copy?"Запрос будет скопирован в буфер обмена":""}">${esc(a.label)}${a.copy?" ⧉":""}</button>`).join("")}</div></div>`).join("");
+  $$("#srcCards button").forEach(b=>b.onclick=async()=>{const s=LINKS.sources[+b.dataset.s],a=s.actions[+b.dataset.i];openExt(a.url);if(a.copy){try{await Promise.race([navigator.clipboard.writeText(a.copy),new Promise((_,r)=>setTimeout(()=>r(0),1500))]);toast("Запрос скопирован: "+a.copy+"\nВставьте его в строку поиска (Ctrl+V)")}catch(e){toast("Скопируйте запрос вручную: "+a.copy,8000)}}addHist(LINKS.query||"(без запроса)",s.name+" — "+a.label)})}
+function addHist(q,src){const h=LS.get("hist",[]);h.unshift({t:new Date().toISOString(),q,src});LS.set("hist",h.slice(0,300));renderHist()}
+function renderHist(){const h=LS.get("hist",[]);$("#histTbl tbody").innerHTML=h.length?h.map(x=>`<tr><td class="small">${fmtDT(x.t)}</td><td>${esc(x.q)}</td><td class="small">${esc(x.src)}</td></tr>`).join(""):`<tr><td colspan="3" class="muted">Пусто</td></tr>`}
+["#qWords","#qPhrase","#qParties","#qNcn","#qCase","#qCourt"].forEach(i=>$(i).addEventListener("input",renderQ));
+$("#qCopy").onclick=async()=>{try{await navigator.clipboard.writeText($("#qOut").textContent);toast("Скопировано")}catch(e){toast("Не удалось скопировать")}};
+$("#qClear").onclick=()=>{["#qWords","#qPhrase","#qParties","#qNcn","#qCase"].forEach(i=>$(i).value="");$("#qCourt").value="";renderQ();$("#localCard").hidden=true};
+$("#histClear").onclick=()=>{LS.set("hist",[]);renderHist()};
+$("#qExpand").onclick=e=>act(e.target,async()=>{const q=[$("#qWords").value,$("#qPhrase").value,$("#qParties").value].filter(Boolean).join("; ");if(!q)throw new Error("Введите тему в поле «Ключевые слова»");const r=await api("/llm/expand",{query:q});
+  $("#qExpandOut").innerHTML=`<div class="ai" style="margin-top:10px">${r.terms.map(t=>`<button class="btn sm" data-term="${esc(t)}" style="margin:2px">${esc(t)}</button>`).join("")}${r.comment?"\n"+esc(r.comment):""}</div>`;
+  $$("[data-term]").forEach(b=>b.onclick=()=>{const w=split($("#qWords").value);if(!w.includes(b.dataset.term))w.push(b.dataset.term);$("#qWords").value=w.join("; ");renderQ()})});
+$("#qLocal").onclick=e=>act(e.target,async()=>{const p=qParts();const q=[...split(p.words),p.phrase,p.parties,p.ncn,p.case].filter(Boolean).join("; ");if(!q)throw new Error("Пустой запрос");const r=await api("/search?q="+encodeURIComponent(q));$("#localCard").hidden=false;
+  const sec=(t,n,html)=>`<h3>${t} — ${n}</h3>${n?html:'<p class="muted small">ничего</p>'}`;
+  $("#localRes").innerHTML=`<p class="small muted">Все термины обязательны: ${esc(q)}</p>`+
+   sec("Решения из лент",r.items.length,`<table class="tbl">${r.items.map(i=>`<tr><td class="small">${fmtD(i.pub||i.first_seen)}</td><td>${i.link?`<a href="#" data-ext="${esc(i.link)}">${esc(i.title)}</a>`:esc(i.title)}<div class="small muted">${esc((i.description||"").slice(0,200))}</div></td><td class="small">${[...(i.ncn||[]),...(i.actions||[])].map(x=>`<span class="tag">${esc(x)}</span>`).join("")}</td></tr>`).join("")}</table>`)+
+   sec("Документы",r.documents.length,r.documents.map(d=>`<div style="margin-bottom:8px"><b>${esc(d.name)}</b> <span class="small muted">${esc(d.meta.court||"")} ${(d.meta.ncn||[]).join(" ")}</span>${d.snippets.map(s=>`<div class="snip">…${esc(s.text)}…</div>`).join("")}</div>`).join(""))+
+   sec("Дела",r.cases.length,r.cases.map(c=>`<div><a href="#" data-case="${c.id}">${esc(c.title)}</a></div>`).join(""))+
+   sec("События по делам",r.events.length,`<table class="tbl">${r.events.map(ev=>`<tr><td class="small">${fmtD(ev.date)}</td><td><b>${esc(ev.case_title)}</b>: ${esc(ev.title)}</td></tr>`).join("")}</table>`);
+  $$("#localRes [data-case]").forEach(a=>a.onclick=ev=>{ev.preventDefault();go("cases");openCase(a.dataset.case)})});
+
+/* мои источники */
+let CEDIT=null;
+function renderCustom(){const L=CFG.custom_sources||[];$("#cTbl tbody").innerHTML=L.length?L.map((c,i)=>`<tr><td><b>${esc(c.name)}</b> <span class="tag ${c.kind==="free"?"ok":"warn"}">${c.kind==="free"?"бесплатно":"подписка"}</span><br><span class="small muted">${esc(c.desc||"")}</span></td><td class="small mono">${esc(c.search||c.home||"")}</td><td class="small">${c.rss?`<span class="mono">${esc(c.rss)}</span><br><button class="btn sm" data-crss="${i}">В мониторинг</button>`:"—"}</td><td style="white-space:nowrap"><button class="btn sm" data-cedit="${i}">Изменить</button> <button class="btn sm danger" data-cdel="${i}">Удалить</button></td></tr>`).join(""):`<tr><td colspan="4" class="muted">Своих источников пока нет</td></tr>`;
+  $$("[data-cdel]").forEach(b=>b.onclick=()=>{const L=CFG.custom_sources.slice();if(!confirm("Удалить источник «"+L[+b.dataset.cdel].name+"»?"))return;L.splice(+b.dataset.cdel,1);saveCfg({custom_sources:L},"Источник удалён")});
+  $$("[data-cedit]").forEach(b=>b.onclick=()=>{const c=CFG.custom_sources[+b.dataset.cedit];CEDIT=c.id;$("#cName").value=c.name;$("#cKind").value=c.kind||"free";$("#cSearch").value=c.search||"";$("#cHome").value=c.home||"";$("#cRss").value=c.rss||"";$("#cDesc").value=c.desc||"";$("#cAdd").textContent="Сохранить изменения";$("#cCancel").hidden=false});
+  $$("[data-crss]").forEach(b=>b.onclick=async()=>{const c=CFG.custom_sources[+b.dataset.crss];let host;try{const u=new URL(c.rss);if(u.protocol!=="https:")throw 0;host=u.hostname}catch(e){return toast("RSS должна быть https-адресом")}
+    if(CFG.feeds.some(f=>f.url===c.rss))return toast("Лента уже в мониторинге");if(!confirm("Разрешить хост "+host+" и добавить ленту «"+c.name+"» в мониторинг?\nПеред опросом проверяется robots.txt; при запрете нужна отметка «Допускаю опрос»."))return;
+    const eh=(CFG.extra_feed_hosts||[]).slice();if(!eh.includes(host))eh.push(host);await saveCfg({extra_feed_hosts:eh,feeds:CFG.feeds.concat([{name:c.name,url:c.rss,enabled:true,robots_override:false}])},"Лента добавлена в мониторинг")})}
+function cReset(){CEDIT=null;["#cName","#cSearch","#cHome","#cRss","#cDesc"].forEach(i=>$(i).value="");$("#cKind").value="free";$("#cAdd").textContent="Добавить источник";$("#cCancel").hidden=true}
+$("#cCancel").onclick=cReset;
+$("#cAdd").onclick=async()=>{const f={name:$("#cName").value.trim(),kind:$("#cKind").value,search:$("#cSearch").value.trim(),home:$("#cHome").value.trim(),rss:$("#cRss").value.trim(),desc:$("#cDesc").value.trim()};if(!f.name||!(f.search||f.home))return toast("Укажите название и адрес поиска");
+  const L=(CFG.custom_sources||[]).slice();if(CEDIT){const i=L.findIndex(x=>x.id===CEDIT);L[i]=Object.assign({},L[i],f)}else{if(L.some(x=>x.name.toLowerCase()===f.name.toLowerCase()))return toast("Источник с таким названием уже есть");L.push(f)}
+  if(await saveCfg({custom_sources:L},CEDIT?"Изменения сохранены":"Источник добавлен"))cReset()};
+$("#cExport").onclick=()=>{const L=CFG.custom_sources||[];if(!L.length)return toast("Нет своих источников");dl(new Blob([JSON.stringify({format:"hkcl-sources",version:1,sources:L},null,1)],{type:"application/json"}),"hkcl_sources_"+stamp()+".json")};
+$("#cImportBtn").onclick=()=>$("#cImport").click();
+$("#cImport").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;try{const j=JSON.parse(await f.text());const L=(CFG.custom_sources||[]).slice();let n=0;for(const x of (j.sources||j)){if(!x||!x.name||!(x.search||x.home)||L.some(y=>y.name.toLowerCase()===String(x.name).toLowerCase()))continue;L.push({name:String(x.name),kind:x.kind==="paid"?"paid":"free",search:String(x.search||""),home:String(x.home||""),rss:String(x.rss||""),desc:String(x.desc||"")});n++}await saveCfg({custom_sources:L},"Импортировано: "+n)}catch(err){toast("Ошибка импорта: "+err.message)}};
+
+async function saveCfg(part,msg){try{CFG=await api("/config",part);if(msg)toast(msg);renderAllCfg();return true}catch(e){toast("Ошибка: "+e.message,8000);return false}}
+function renderAllCfg(){renderCustom();renderFeeds();renderProfiles();fillMail();fillAuto();fillLlm();fillAgent();fillSettings();renderRef();renderQ()}
+
+/* ===================== МОНИТОРИНГ ===================== */
+let FSTATE={},ITEMS=[];
+function renderFeeds(){const tb=$("#feedTbl tbody");tb.innerHTML=CFG.feeds.map((f,i)=>{const st=FSTATE[f.id]||{},r=st.robots;const rt=r==="allowed"?'<span class="tag ok">разрешено</span>':r==="disallowed"?'<span class="tag bad">запрещено</span>':r==="unknown"?'<span class="tag warn">неизвестно</span>':'<span class="tag">не проверялось</span>';
+  return `<tr><td><input type="checkbox" data-fen="${i}" ${f.enabled?"checked":""}></td><td><b>${esc(f.name)}</b><br><span class="small mono">${esc(f.url)}</span></td><td>${rt}<br><span class="small muted">${esc(st.robots_note||"")}</span><br><button class="btn sm" data-frob="${i}">Проверить</button></td><td><label class="chk small"><input type="checkbox" data-fov="${f.id}" ${f.robots_override?"checked":""}> Допускаю опрос</label>${f.override_by?`<div class="small muted">решение: ${esc(f.override_by)}</div>`:""}</td><td class="small">${fmtDT(st.last_fetch)}</td><td class="small">${esc(st.last_status||"")}</td><td><button class="btn sm danger" data-fdel="${i}">Удалить</button></td></tr>`}).join("")||`<tr><td colspan="7" class="muted">Лент нет</td></tr>`;
+  $$("[data-fen]").forEach(c=>c.onchange=()=>{const F=CFG.feeds.slice();F[+c.dataset.fen]=Object.assign({},F[+c.dataset.fen],{enabled:c.checked});saveCfg({feeds:F})});
+  $$("[data-fov]").forEach(c=>c.onchange=async()=>{if(c.checked&&!confirm("Решение оператора.\n\nrobots.txt сайта не разрешает автоматический доступ к этому адресу (или статус неизвестен). Лента опубликована для подписки в RSS-ридерах.\n\nПодтверждаете опрос ленты для частного некоммерческого использования — не чаще установленного интервала, без скачивания текстов решений?")){c.checked=false;return}
+    try{await api("/feeds/"+c.dataset.fov+"/override",{enabled:c.checked});CFG=await api("/config");renderFeeds()}catch(e){toast("Ошибка: "+e.message);c.checked=!c.checked}});
+  $$("[data-fdel]").forEach(b=>b.onclick=()=>{const F=CFG.feeds.slice();if(!confirm("Удалить ленту «"+F[+b.dataset.fdel].name+"»?"))return;F.splice(+b.dataset.fdel,1);saveCfg({feeds:F},"Лента удалена")});
+  $$("[data-frob]").forEach(b=>b.onclick=()=>act(b,async()=>{const f=CFG.feeds[+b.dataset.frob];const r=await api("/feeds/robots",{url:f.url});FSTATE[f.id]=Object.assign(FSTATE[f.id]||{},{robots:r.status,robots_note:r.note});renderFeeds()}));
+  const sel=$("#mFeed"),cur=sel.value;sel.innerHTML='<option value="">Все</option>'+CFG.feeds.map(f=>`<option value="${esc(f.id)}">${esc(f.name)}</option>`).join("");sel.value=cur;
+  const ps=$("#mProfile"),pc=ps.value;ps.innerHTML='<option value="">Все решения</option><option value="*">Совпадения по любому профилю</option>'+CFG.profiles.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("");ps.value=pc;
+  const dp=$("#dProfile"),dc=dp.value;dp.innerHTML='<option value="">—</option>'+CFG.profiles.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("");dp.value=dc}
+$("#fAdd").onclick=()=>{const name=$("#fName").value.trim(),url=$("#fUrl").value.trim();if(!name||!url)return toast("Укажите название и URL");if(/hklii/i.test(url))return toast("HKLII запрещает автоматический доступ");saveCfg({feeds:CFG.feeds.concat([{name,url,enabled:true,robots_override:false}])},"Лента добавлена").then(ok=>{if(ok){$("#fName").value="";$("#fUrl").value=""}})};
+$("#chkNow").onclick=e=>act(e.target,async()=>{const s=await api("/feeds/check",{force:$("#chkForce").checked});await loadItems();refreshBadges();return s},s=>`Проверка завершена: новых ${s.new}, совпадений ${s.new_matches}, событий по делам ${s.case_events.length}`);
+async function loadItems(){try{const f=await api("/feeds");FSTATE=f.state||{};const p=$("#mProfile").value;const q=new URLSearchParams({limit:3000});const days=+$("#mDays").value;if(days)q.set("days",days);if($("#mFeed").value)q.set("feed",$("#mFeed").value);if(p==="*")q.set("matched","1");else if(p)q.set("profile",p);if($("#mText").value.trim())q.set("text",$("#mText").value.trim());
+  const r=await api("/items?"+q);ITEMS=r.items;renderFeeds();renderItems(r.total)}catch(e){toast("Ошибка: "+e.message)}}
+const pName=id=>(CFG.profiles.find(p=>p.id===id)||{}).name||id;
+function renderItems(total){const mt=ITEMS.filter(i=>Object.keys(i.matches||{}).length).length;$("#monKpis").innerHTML=`<div class="kpi"><b>${total}</b><span>показано</span></div><div class="kpi"><b>${mt}</b><span>с совпадениями</span></div>`;
+  $("#itemTbl tbody").innerHTML=ITEMS.length?ITEMS.slice(0,1500).map((it,i)=>`<tr><td class="small" style="white-space:nowrap">${fmtD(it.pub||it.first_seen)}</td><td class="small">${esc(it.feed_name)}</td><td>${it.link?`<a href="#" data-ext="${esc(it.link)}">${esc(it.title||"(без заголовка)")}</a>`:esc(it.title)}${it.description&&it.description!==it.title?`<div class="small muted">${esc(it.description.slice(0,300))}</div>`:""}</td><td class="small">${[...(it.ncn||[]),...(it.actions||[])].map(x=>`<span class="tag">${esc(x)}</span>`).join("")||"—"}</td><td class="small">${Object.entries(it.matches||{}).map(([p,h])=>`<span class="tag acc">${esc(pName(p))}</span> <span class="muted">${esc((h||[]).join(", "))}</span>`).join("<br>")||"—"}</td><td><button class="btn sm" data-watch="${esc(it.id)}">На контроль</button></td></tr>`).join(""):`<tr><td colspan="6" class="muted">Нет решений. Добавьте ленты и нажмите «Проверить ленты сейчас».</td></tr>`;
+  $$("[data-watch]").forEach(b=>b.onclick=()=>act(b,async()=>{const c=await api("/cases/from-item",{item_id:b.dataset.watch});refreshBadges();return c},c=>c.already_exists?"Дело уже на контроле: "+c.title:"Поставлено на контроль: "+c.title))}
+["#mProfile","#mFeed","#mDays"].forEach(i=>$(i).onchange=loadItems);$("#mText").oninput=()=>{clearTimeout(window._mt);window._mt=setTimeout(loadItems,300)};$("#mReload").onclick=loadItems;
+const itemRows=()=>ITEMS.map(it=>({"Дата":fmtD(it.pub),"Получено":fmtD(it.first_seen),"Лента":it.feed_name,"Решение":it.title,"Описание":it.description,"NCN":(it.ncn||[]).join("; "),"Номера дел":(it.actions||[]).join("; "),"Профили":Object.keys(it.matches||{}).map(pName).join("; "),"Ссылка":it.link}));
+$("#mCsv").onclick=()=>csv(itemRows(),"hkcl_resheniya");$("#mXlsx").onclick=()=>xlsx(itemRows(),"hkcl_resheniya");$("#mPrint").onclick=()=>window.print();
+LOADERS.monitor=loadItems;
+
+/* ===================== ДЕЛА ===================== */
+let CASES=[],CUR=null;
+const PRI={high:"высокий",normal:"обычный",low:"низкий"},ET={judgment:"Решение",document:"Документ",note:"Заметка",hearing:"Слушание",deadline:"Срок",status:"Статус",reminder:"Напоминание",ai:"ИИ",agent:"Агент"};
+async function loadCases(){try{const st=$("#caseFilter").value;CASES=(await api("/cases"+(st?"?status="+st:""))).cases;renderCaseList();if(CUR)openCase(CUR,true)}catch(e){toast("Ошибка: "+e.message)}}
+function renderCaseList(){$("#caseList").innerHTML=CASES.length?CASES.map(c=>`<div class="caseitem ${c.id===CUR?"on":""}" data-cid="${c.id}"><div class="row" style="justify-content:space-between"><b>${esc(c.title)}</b>${c.events_unseen?`<span class="cnt">${c.events_unseen}</span>`:""}</div><div class="small muted">${[...c.numbers,...c.ncn].map(x=>`<span class="tag">${esc(x)}</span>`).join("")}${c.priority==="high"?'<span class="tag bad">высокий</span>':""}${c.status==="closed"?'<span class="tag">закрыто</span>':""}</div><div class="small muted">Событий: ${c.events_total}${c.last_event_at?" · последнее "+fmtD(c.last_event_at):""}${c.remind_at?" · напомнить "+fmtD(c.remind_at):""}</div></div>`).join(""):'<div class="card muted">Дел нет. Нажмите «Поставить дело на контроль» или кнопку «На контроль» в мониторинге.</div>';
+  $$("[data-cid]").forEach(d=>d.onclick=()=>openCase(d.dataset.cid))}
+function caseForm(c){c=c||{numbers:[],ncn:[],parties:[],keywords:[],tags:[],priority:"normal",status:"active"};return `<div class="grid"><div style="grid-column:1/-1"><label>Название</label><input type="text" id="kTitle" value="${esc(c.title||"")}"></div>
+ <div><label>Номера дел (через «;»)</label><input type="text" id="kNum" value="${esc(c.numbers.join("; "))}" placeholder="HCCT 19/2023"></div><div><label>NCN</label><input type="text" id="kNcn" value="${esc(c.ncn.join("; "))}" placeholder="[2023] HKCFI 2409"></div>
+ <div><label>Стороны</label><input type="text" id="kPar" value="${esc(c.parties.join("; "))}"></div><div><label>Ключевые слова (все обязательны)</label><input type="text" id="kKw" value="${esc(c.keywords.join("; "))}"></div>
+ <div><label>Суд</label><input type="text" id="kCourt" value="${esc(c.court||"")}"></div><div><label>Приоритет</label><select id="kPri">${Object.entries(PRI).map(([k,v])=>`<option value="${k}" ${c.priority===k?"selected":""}>${v}</option>`).join("")}</select></div>
+ <div><label>Напомнить</label><input type="date" id="kRem" value="${esc(c.remind_at||"")}"></div><div><label>Метки</label><input type="text" id="kTags" value="${esc(c.tags.join("; "))}"></div>
+ <div style="grid-column:1/-1"><label>Заметки</label><textarea id="kNotes">${esc(c.notes||"")}</textarea></div></div>`}
+const caseBody=()=>({title:$("#kTitle").value,numbers:split($("#kNum").value),ncn:split($("#kNcn").value),parties:split($("#kPar").value),keywords:split($("#kKw").value),court:$("#kCourt").value,priority:$("#kPri").value,remind_at:$("#kRem").value,tags:split($("#kTags").value),notes:$("#kNotes").value});
+$("#caseNew").onclick=()=>{CUR=null;renderCaseList();$("#caseDetail").innerHTML=`<div class="card"><h2>Новое дело на контроле</h2><p class="sub">Достаточно одного признака. Номер дела и NCN сверяются точно, стороны — по заголовкам решений, ключевые слова — по заголовку и аннотации. Программа сразу проверит уже собранные решения и документы.</p>${caseForm()}<div class="row" style="margin-top:10px"><button class="btn pri" id="kSave">Поставить на контроль</button></div></div>`;
+  $("#kSave").onclick=e=>act(e.target,async()=>{const c=await api("/cases",caseBody());CUR=c.id;await loadCases();refreshBadges();return c},c=>c.already_exists?"Такое дело уже на контроле":"Поставлено на контроль; найдено связанных событий: "+(c.events.length-1))};
+async function openCase(id,keep){try{const c=await api("/cases/"+id);CUR=id;renderCaseList();
+  $("#caseDetail").innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><h2>${esc(c.title)}</h2><span>${c.status==="closed"?'<span class="tag">закрыто</span>':'<span class="tag ok">на контроле</span>'} <span class="tag">${PRI[c.priority]}</span></span></div>
+   <div class="small">${[...c.numbers,...c.ncn].map(x=>`<span class="tag">${esc(x)}</span>`).join("")} ${c.parties.length?"Стороны: "+esc(c.parties.join(", ")):""} ${c.keywords.length?"· Слова: "+esc(c.keywords.join(", ")):""}</div>
+   ${c.notes?`<p class="small" style="white-space:pre-wrap">${esc(c.notes)}</p>`:""}
+   <div class="row" style="margin-top:8px"><button class="btn sm" id="kEdit">Изменить</button><button class="btn sm" id="kSeen">Отметить просмотренным</button><button class="btn sm" id="kBrief">ИИ-справка</button><button class="btn sm" id="kClose">${c.status==="closed"?"Вернуть на контроль":"Закрыть дело"}</button><button class="btn sm danger" id="kDel">Удалить</button>
+   <button class="btn sm" id="kLinks">Найти в базах</button></div></div>
+   <div class="card"><h3 style="margin-top:0">Добавить событие</h3><div class="grid"><div><label>Тип</label><select id="eType"><option value="note">Заметка</option><option value="hearing">Слушание</option><option value="deadline">Срок</option></select></div><div><label>Дата</label><input type="date" id="eDate"></div><div style="grid-column:span 2"><label>Заголовок</label><input type="text" id="eTitle"></div><div style="grid-column:1/-1"><label>Подробности</label><textarea id="eDet"></textarea></div><div style="grid-column:1/-1"><label>Ссылка</label><input type="text" id="eLink"></div></div><button class="btn" id="eAdd" style="margin-top:8px">Добавить</button></div>
+   <div class="card"><h3 style="margin-top:0">Хронология (${c.events.length})</h3><div class="tl">${c.events.map(e=>`<div class="ev ${e.seen?"":"unseen"}"><div class="small muted">${fmtD(e.date)} · ${esc(ET[e.type]||e.type)} · ${esc(e.actor||"")}${e.seen?"":' · <b style="color:var(--warn)">новое</b>'}</div><div class="t">${e.link?`<a href="#" data-ext="${esc(e.link)}">${esc(e.title)}</a>`:esc(e.title)}</div>${e.details?`<div class="d ${e.type==="ai"?"ai":""}">${esc(e.details)}</div>`:""}</div>`).join("")}</div></div>`;
+  $("#kEdit").onclick=()=>{modal("Изменить дело",caseForm(c)+'<button class="btn pri" id="kUpd" style="margin-top:10px">Сохранить</button>');$("#kUpd").onclick=ev=>act(ev.target,async()=>{await api("/cases/"+id,caseBody());$("#modal").style.display="none";await loadCases()},"Сохранено")};
+  $("#kSeen").onclick=e=>act(e.target,async()=>{await api("/cases/"+id+"/seen",{});await loadCases();refreshBadges()},"Отмечено");
+  $("#kBrief").onclick=e=>act(e.target,async()=>{await api("/llm/case-brief",{case_id:id});await openCase(id)},"ИИ-справка добавлена в хронологию");
+  $("#kClose").onclick=e=>act(e.target,async()=>{await api("/cases/"+id,{status:c.status==="closed"?"active":"closed"});await loadCases()},"Готово");
+  $("#kDel").onclick=e=>{if(!confirm("Удалить дело и всю хронологию?"))return;act(e.target,async()=>{await api("/cases/"+id,undefined,"DELETE");CUR=null;$("#caseDetail").innerHTML="";await loadCases();refreshBadges()},"Удалено")};
+  $("#kLinks").onclick=()=>{$("#qWords").value="";$("#qPhrase").value="";$("#qParties").value=c.parties[0]||"";$("#qNcn").value=c.ncn[0]||"";$("#qCase").value=c.numbers[0]||"";go("search");renderQ()};
+  $("#eAdd").onclick=e=>act(e.target,async()=>{await api("/cases/"+id+"/events",{type:$("#eType").value,date:$("#eDate").value||null,title:$("#eTitle").value||"Событие",details:$("#eDet").value,link:$("#eLink").value});await openCase(id);await loadCases()},"Событие добавлено")}catch(e){if(!keep)toast("Ошибка: "+e.message)}}
+$("#caseFilter").onchange=loadCases;
+$("#caseAlertPrev").onclick=e=>act(e.target,async()=>{const r=await api("/alerts/cases",{dry_run:true});modal("Письмо об изменениях по делам",r.preview_html?`<p><b>Тема:</b> ${esc(r.preview_subject)}</p><iframe sandbox="" style="width:100%;height:60vh;border:1px solid var(--line);background:#fff" srcdoc="${esc(r.preview_html)}"></iframe>`:esc(r.message))});
+$("#caseAlertSend").onclick=e=>{if(!confirm("Отправить письмо об изменениях по делам?"))return;act(e.target,()=>api("/alerts/cases",{}),r=>r.message)};
+LOADERS.cases=loadCases;
+
+/* ===================== ДОКУМЕНТЫ ===================== */
+let DOCS=[],DRES=null;
+async function loadDocs(){try{DOCS=(await api("/documents")).documents;await runDocs(true)}catch(e){toast("Ошибка: "+e.message)}}
+function fileB64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]||"");r.onerror=()=>rej(r.error);r.readAsDataURL(f)})}
+async function addFiles(files){let n=0,ev=0;for(const f of files){$("#dInfo").textContent="Загрузка: "+f.name;try{const d=await api("/documents",{name:f.name,content_base64:await fileB64(f)});n++;ev+=(d.case_events||[]).length}catch(e){toast(f.name+": "+e.message,8000)}}$("#dInfo").textContent="";toast(`Загружено документов: ${n}${ev?"; связаны с делами на контроле: "+ev:""}`);await loadDocs();refreshBadges()}
+const drop=$("#drop");drop.onclick=()=>$("#fileIn").click();$("#fileIn").onchange=e=>{addFiles([...e.target.files]);e.target.value=""};
+["dragenter","dragover"].forEach(v=>drop.addEventListener(v,e=>{e.preventDefault();drop.classList.add("over")}));["dragleave","drop"].forEach(v=>drop.addEventListener(v,e=>{e.preventDefault();drop.classList.remove("over")}));drop.addEventListener("drop",e=>addFiles([...e.dataTransfer.files]));
+function docQuery(){return{query:$("#dQuery").value,mode:$("#dMode").value,profile_id:$("#dProfile").value||null,ctx:+$("#dCtx").value||220}}
+const reEsc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+function termRe(w){w=String(w).trim();const fz=w.replace(/\s+/g,"").length>=6;return new RegExp((/^[A-Za-z0-9]/.test(w)?"(?<![A-Za-z0-9])":"")+[...w].map(c=>/\s/.test(c)?"\\s*":reEsc(c)).join(fz?"\\s?":""),"gi")}
+function hl(t,terms){let s=esc(t);terms.forEach(w=>{try{s=s.replace(termRe(esc(w)),m=>`<mark>${m}</mark>`)}catch(e){}});return s}
+async function runDocs(silent){if(!DOCS.length){DRES=null;$("#docTbl tbody").innerHTML='<tr><td colspan="5" class="muted">Документов нет</td></tr>';return}
+  try{DRES=await api("/documents/analyze",docQuery())}catch(e){if(!silent)toast("Ошибка: "+e.message);return}
+  const terms=split($("#dQuery").value);const prof=CFG.profiles.find(p=>p.id===$("#dProfile").value);const all=prof?[...prof.any_words,...prof.all_words]:terms;
+  $("#docTbl tbody").innerHTML=DRES.results.map(r=>{const nz=Object.entries(r.counts).filter(([w,c])=>c);const z=Object.entries(r.counts).filter(([w,c])=>!c).map(([w])=>w);const doc=DOCS.find(d=>d.id===r.id)||{};const ai=(doc.llm||{}).summary_management;
+   return `<tr><td><b>${esc(r.name)}</b><br><span class="small muted">${r.chars.toLocaleString("ru-RU")} симв.</span><br>${(all.length)?(r.ok?'<span class="tag ok">соответствует</span>':'<span class="tag">не соответствует</span>'):""}</td><td class="small">${esc(r.meta.court||"—")}<br>${[...(r.meta.ncn||[]),...(r.meta.acts||[])].map(x=>`<span class="tag">${esc(x)}</span>`).join("")}</td><td class="small">${esc(r.meta.date||"—")}<br><span class="muted">${esc(r.meta.before||"")}</span></td>
+   <td class="small">${nz.map(([w,c])=>`<span class="tag acc">${esc(w)}: ${c}</span>`).join("")}${z.length?`<div class="muted" style="font-size:11px">не найдено: ${esc(z.join("; "))}</div>`:""}${r.snippets.map(s=>`<div class="snip">…${hl(s.text,all)}…</div>`).join("")}${ai?`<div class="ai" style="margin-top:6px">${esc(ai.text)}</div>`:""}</td>
+   <td style="white-space:nowrap"><button class="btn sm" data-dsum="${r.id}">ИИ-резюме</button><br><button class="btn sm" data-dext="${r.id}" style="margin-top:4px">ИИ-данные</button><br><button class="btn sm" data-dask="${r.id}" style="margin-top:4px">Вопрос</button><br><button class="btn sm" data-dwatch="${r.id}" style="margin-top:4px">На контроль</button><br><button class="btn sm danger" data-ddel="${r.id}" style="margin-top:4px">Удалить</button></td></tr>`}).join("");
+  $("#dInfo").textContent=`Документов: ${DRES.results.length}, соответствуют: ${DRES.results.filter(r=>r.ok).length}`;
+  $$("[data-dsum]").forEach(b=>b.onclick=()=>act(b,async()=>{const r=await api("/llm/summarize",{doc_id:b.dataset.dsum,audience:"management"});await loadDocs();modal("ИИ-резюме для руководства",`<div class="ai">${esc(r.summary)}</div>${r.truncated?'<p class="small muted">Документ длинный: передано начало и окончание текста.</p>':""}`)}));
+  $$("[data-dext]").forEach(b=>b.onclick=()=>act(b,async()=>{const r=await api("/llm/extract",{doc_id:b.dataset.dext});modal("ИИ-извлечение данных",`<div class="ai">${esc(JSON.stringify(r.data,null,1))}</div>`)}));
+  $$("[data-dask]").forEach(b=>b.onclick=()=>{const q=prompt("Вопрос к тексту решения:");if(!q)return;act(b,async()=>{const r=await api("/llm/ask",{doc_id:b.dataset.dask,question:q});modal("Ответ ИИ",`<p><b>${esc(q)}</b></p><div class="ai">${esc(r.answer)}</div>`)})});
+  $$("[data-dwatch]").forEach(b=>b.onclick=()=>{const r=DRES.results.find(x=>x.id===b.dataset.dwatch);act(b,async()=>{const c=await api("/cases",{title:r.name.replace(/\.\w+$/,""),numbers:r.meta.acts||[],ncn:r.meta.ncn||[],court:r.meta.court||"",notes:"Поставлено на контроль по документу «"+r.name+"»."});refreshBadges();return c},c=>c.already_exists?"Дело уже на контроле":"Поставлено на контроль")});
+  $$("[data-ddel]").forEach(b=>b.onclick=()=>{if(!confirm("Удалить документ?"))return;act(b,async()=>{await api("/documents/"+b.dataset.ddel,undefined,"DELETE");await loadDocs()},"Удалено")})}
+$("#dRun").onclick=()=>runDocs();$("#dProfile").onchange=()=>runDocs();
+const docRows=()=>(DRES?DRES.results:[]).map(r=>({"Документ":r.name,"Соответствует":r.ok?"да":"нет","Суд":r.meta.court||"","NCN":(r.meta.ncn||[]).join("; "),"Номера дел":(r.meta.acts||[]).join("; "),"Дата":r.meta.date||"","Состав":r.meta.before||"","Совпадения":Object.entries(r.counts).filter(([w,c])=>c).map(([w,c])=>w+": "+c).join("; "),"Фрагменты":r.snippets.map(s=>s.text).join(" | ")}));
+$("#dCsv").onclick=()=>csv(docRows(),"hkcl_analiz");$("#dXlsx").onclick=()=>xlsx(docRows(),"hkcl_analiz");$("#dPrint").onclick=()=>window.print();
+const repBody=dry=>Object.assign({dry_run:dry,only_matching:$("#dOnlyOk").checked,doc_ids:DOCS.map(d=>d.id)},docQuery());
+$("#dMailPrev").onclick=e=>act(e.target,async()=>preview("#docPrev",await api("/report",repBody(true))));
+$("#dMail").onclick=e=>{if(!confirm("Отправить отчёт получателям из раздела «Рассылка»?"))return;act(e.target,()=>api("/report",repBody(false)),r=>r.message)};
+LOADERS.docs=loadDocs;
+
+/* ===================== ПРОФИЛИ ===================== */
+let PROFS=[];
+function renderProfiles(){PROFS=JSON.parse(JSON.stringify(CFG.profiles));$("#profList").innerHTML=PROFS.map((p,i)=>`<div class="card"><div class="grid">
+  <div><label>Название</label><input type="text" data-pf="name" data-i="${i}" value="${esc(p.name)}"></div>
+  <div><label class="chk"><input type="checkbox" data-pf="enabled" data-i="${i}" ${p.enabled!==false?"checked":""}> активен</label><label class="chk"><input type="checkbox" data-pf="email" data-i="${i}" ${p.email?"checked":""}> в дайджест</label></div>
+  <div><label>Ленты (пусто — все)</label>${CFG.feeds.map(f=>`<label class="chk small"><input type="checkbox" data-pfeed="${esc(f.id)}" data-i="${i}" ${(p.feeds||[]).includes(f.id)?"checked":""}> ${esc(f.name)}</label>`).join("")||'<span class="small muted">нет лент</span>'}</div>
+  <div><label>Любое из слов</label><textarea data-pf="any_words" data-i="${i}">${esc((p.any_words||[]).join("; "))}</textarea></div>
+  <div><label>Все слова обязательно</label><textarea data-pf="all_words" data-i="${i}">${esc((p.all_words||[]).join("; "))}</textarea></div>
+  <div><label>Исключить</label><textarea data-pf="exclude_words" data-i="${i}">${esc((p.exclude_words||[]).join("; "))}</textarea></div>
+  <div><label>Регулярное выражение</label><input type="text" data-pf="case_regex" data-i="${i}" value="${esc(p.case_regex||"")}"></div>
+  <div style="align-self:end"><button class="btn sm danger" data-pdel="${i}">Удалить профиль</button></div></div></div>`).join("")||'<p class="muted">Профилей нет</p>';
+  $$("[data-pf]").forEach(el=>el.addEventListener(el.type==="checkbox"?"change":"input",()=>{const p=PROFS[+el.dataset.i],k=el.dataset.pf;p[k]=el.type==="checkbox"?el.checked:(/words$/.test(k)?split(el.value):el.value)}));
+  $$("[data-pfeed]").forEach(el=>el.onchange=()=>{const p=PROFS[+el.dataset.i];p.feeds=(p.feeds||[]).filter(x=>x!==el.dataset.pfeed);if(el.checked)p.feeds.push(el.dataset.pfeed)});
+  $$("[data-pdel]").forEach(b=>b.onclick=()=>{if(!confirm("Удалить профиль?"))return;PROFS.splice(+b.dataset.pdel,1);saveCfg({profiles:PROFS},"Профиль удалён")})}
+$("#pAdd").onclick=()=>{PROFS.push({name:"Новый профиль",enabled:true,feeds:[],any_words:[],all_words:[],exclude_words:[],case_regex:"",email:false});CFG.profiles=PROFS;renderProfiles()};
+$("#pSave").onclick=()=>saveCfg({profiles:PROFS},"Профили сохранены; совпадения пересчитаны");
+
+/* ===================== РАССЫЛКА ===================== */
+function fillMail(){const s=CFG.smtp;$("#sHost").value=s.host||"";$("#sPort").value=s.port||465;$("#sSec").value=s.security||"ssl";$("#sUser").value=s.user||"";$("#sFrom").value=s.from||"";$("#sTo").value=(s.to||[]).join("; ");$("#sPass").value="";$("#sPass").placeholder=CFG.secrets.smtp_password?"пароль сохранён — оставьте пустым":"не задан"}
+const mailBody=()=>{const b={smtp:{host:$("#sHost").value.trim(),port:+$("#sPort").value||465,security:$("#sSec").value,user:$("#sUser").value.trim(),from:$("#sFrom").value.trim(),to:split($("#sTo").value)}};if($("#sPass").value)b.smtp_password=$("#sPass").value;return b};
+$("#sSave").onclick=()=>saveCfg(mailBody(),"Сохранено");
+$("#sTest").onclick=e=>act(e.target,async()=>{await api("/config",mailBody());CFG=await api("/config");fillMail();return api("/mail/test",{})},r=>r.message);
+$("#sClearPw").onclick=()=>{if(confirm("Удалить сохранённый SMTP-пароль?"))saveCfg({clear_smtp_password:true},"Пароль удалён")};
+$("#sPreview").onclick=e=>act(e.target,async()=>preview("#digPrev",await api("/digest",{dry_run:true})));
+$("#sSend").onclick=e=>{if(!confirm("Отправить дайджест сейчас?"))return;act(e.target,()=>api("/digest",{}),r=>r.message)};
+$("#sReset").onclick=e=>{if(!confirm("Сбросить отметки отправки?"))return;act(e.target,()=>api("/digest/reset",{}),"Отметки сброшены")};
+
+/* ===================== АВТОМАТИЗАЦИЯ ===================== */
+const DAYS=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+function fillAuto(){const a=CFG.automation;$("#aEnabled").checked=!!a.enabled;$("#aPaused").checked=!!a.paused;$("#aMode").value=a.mode;$("#aTimes").value=(a.times||[]).join("; ");$("#aInt").value=a.interval_hours;
+  $("#aDays").innerHTML=DAYS.map((d,i)=>`<label class="chk"><input type="checkbox" data-day="${i+1}" ${(a.weekdays||[]).includes(i+1)?"checked":""}> ${d}</label>`).join("");
+  $("#aFeeds").checked=a.check_feeds!==false;$("#aReminders").checked=a.reminders!==false;$("#aAlerts").checked=a.case_alerts!==false;$("#aDigest").checked=!!a.send_digest;$("#aNotify").checked=a.notify!==false;$("#aLlmDocs").checked=!!a.llm_summarize_new_docs;
+  $("#stTray").checked=CFG.settings.minimize_to_tray!==false;$("#stMin").checked=!!CFG.settings.start_minimized;modeVis()}
+function modeVis(){const d=$("#aMode").value==="daily";$("#aTimesBox").hidden=!d;$("#aIntBox").hidden=d}
+$("#aMode").onchange=modeVis;
+$("#aSave").onclick=()=>saveCfg({automation:{enabled:$("#aEnabled").checked,paused:$("#aPaused").checked,mode:$("#aMode").value,times:split($("#aTimes").value),interval_hours:+$("#aInt").value||6,weekdays:$$("[data-day]").filter(c=>c.checked).map(c=>+c.dataset.day),check_feeds:$("#aFeeds").checked,reminders:$("#aReminders").checked,case_alerts:$("#aAlerts").checked,send_digest:$("#aDigest").checked,notify:$("#aNotify").checked,llm_summarize_new_docs:$("#aLlmDocs").checked}},"Расписание сохранено").then(ok=>{if(ok){loadAuto();if(CFG.automation.windows_task)api("/automation/windows-task",{install:true}).then(()=>toast("Расписание сохранено; задача Windows обновлена")).catch(e=>toast("Задача Windows не обновлена: "+e.message,8000))}});
+$("#aRun").onclick=e=>act(e.target,async()=>{const r=await api("/automation/run",{force:true});await loadAuto();refreshBadges();return r},r=>r.error?"Ошибка: "+r.error:"Цикл выполнен: новых решений "+((r.check||{}).new||0)+", событий по делам "+((r.check||{}).case_events||0));
+$("#wtInstall").onclick=e=>act(e.target,async()=>{await loadAuto();return api("/automation/windows-task",{install:true})},"Задача создана в Планировщике заданий Windows").then(loadAuto);
+$("#wtRemove").onclick=e=>act(e.target,()=>api("/automation/windows-task",{install:false}),"Задача удалена").then(loadAuto);
+$("#asOn").onclick=e=>act(e.target,()=>api("/automation/autostart",{enabled:true}),"Автозапуск включён").then(loadAuto);
+$("#asOff").onclick=e=>act(e.target,()=>api("/automation/autostart",{enabled:false}),"Автозапуск выключен").then(loadAuto);
+$("#stSave").onclick=()=>saveCfg({settings:{minimize_to_tray:$("#stTray").checked,start_minimized:$("#stMin").checked}},"Сохранено");
+async function loadAuto(){try{const s=await api("/automation");const lc=s.last_cycle||{};$("#autoKpis").innerHTML=`<div class="kpi"><b>${s.enabled&&!s.paused?"вкл.":"выкл."}</b><span>автоматизация</span></div><div class="kpi"><b>${s.next_run?fmtDT(s.next_run):"—"}</b><span>следующий запуск</span></div><div class="kpi"><b>${lc.time?fmtDT(lc.time):"—"}</b><span>последний цикл</span></div>`;
+  $("#lastCycle").textContent=JSON.stringify(lc,null,1);const wt=s.windows_task||{},as=s.autostart||{};
+  $("#wtStatus").textContent=!wt.available?"Доступно только в Windows":wt.installed?`Задача создана. Следующий запуск: ${wt.next_run||"—"}; прошлый: ${wt.last_run||"—"}`:"Задача не создана";
+  $("#asStatus").textContent=!as.available?"Доступно только в Windows":as.enabled?"Включён":"Выключен"}catch(e){}}
+LOADERS.auto=loadAuto;
+
+/* ===================== LLM ===================== */
+const DEF_MODEL={anthropic:"claude-sonnet-5-5",openai:"",compatible:""};
+function fillLlm(){const l=CFG.llm;$("#lEnabled").checked=!!l.enabled;$("#lProv").value=l.provider;$("#lModel").value=l.model||"";$("#lBase").value=l.base_url||"";$("#lMax").value=l.max_tokens;$("#lTemp").value=l.temperature;$("#lTimeout").value=l.timeout;$("#lConsent").checked=!!l.consent;$("#lDigest").checked=!!l.digest_summary;$("#lKey").value="";$("#lKey").placeholder=CFG.secrets.llm_api_key?"ключ сохранён — оставьте пустым":"не задан";provVis()}
+function provVis(){const p=$("#lProv").value;$("#lBase").disabled=p!=="compatible";$("#lModel").placeholder=p==="anthropic"?"claude-sonnet-5-5":p==="openai"?"имя модели OpenAI":"например qwen2.5 или deepseek-chat"}
+$("#lProv").onchange=()=>{if(!$("#lModel").value||Object.values(DEF_MODEL).includes($("#lModel").value))$("#lModel").value=DEF_MODEL[$("#lProv").value];provVis()};
+const llmBody=()=>{const b={llm:{enabled:$("#lEnabled").checked,provider:$("#lProv").value,model:$("#lModel").value.trim(),base_url:$("#lBase").value.trim(),max_tokens:+$("#lMax").value||2000,temperature:+$("#lTemp").value,timeout:+$("#lTimeout").value||120,consent:$("#lConsent").checked,digest_summary:$("#lDigest").checked}};if($("#lKey").value)b.llm_api_key=$("#lKey").value;return b};
+$("#lSave").onclick=()=>saveCfg(llmBody(),"Сохранено");
+$("#lTest").onclick=e=>act(e.target,async()=>{await api("/config",llmBody());CFG=await api("/config");fillLlm();return api("/llm/test",{})},r=>`Подключение работает (${r.provider}, ${r.model}): «${r.answer}»`).then(loadLlm);
+$("#lClearKey").onclick=()=>{if(confirm("Удалить API-ключ LLM?"))saveCfg({clear_llm_api_key:true},"Ключ удалён")};
+async function loadLlm(){try{const h=(await api("/llm/history")).runs;$("#llmHist tbody").innerHTML=h.length?h.map(r=>`<tr><td class="small">${fmtDT(r.ts)}</td><td>${esc(r.task)}</td><td class="small">${esc(r.provider)} / ${esc(r.model)}</td><td class="small">${esc(r.actor)}</td><td class="small">${r.ok?'<span class="tag ok">успешно</span>':`<span class="tag bad">ошибка</span> ${esc(r.error||"")}`}</td></tr>`).join(""):'<tr><td colspan="5" class="muted">Обращений не было</td></tr>'}catch(e){}}
+LOADERS.llm=loadLlm;
+
+/* ===================== АГЕНТ ===================== */
+let AGI=null;
+function fillAgent(){const a=CFG.agent;$("#agEnabled").checked=a.enabled!==false;$("#agPerm").value=a.permissions||"full";$("#agRobots").checked=!!a.allow_robots_override;renderHooks()}
+function renderHooks(){const H=CFG.agent.webhooks||[];$("#whTbl tbody").innerHTML=H.length?H.map((h,i)=>`<tr><td><input type="checkbox" data-when="${i}" ${h.enabled?"checked":""}></td><td class="mono small">${esc(h.url)}</td><td class="small">${esc((h.events||[]).join(", "))}</td><td><button class="btn sm danger" data-whdel="${i}">Удалить</button></td></tr>`).join(""):'<tr><td colspan="4" class="muted">Вебхуков нет</td></tr>';
+  $$("[data-whdel]").forEach(b=>b.onclick=()=>{const H=CFG.agent.webhooks.slice();H.splice(+b.dataset.whdel,1);saveCfg({agent:{webhooks:H}},"Удалено")});
+  $$("[data-when]").forEach(c=>c.onchange=()=>{const H=CFG.agent.webhooks.slice();H[+c.dataset.when]=Object.assign({},H[+c.dataset.when],{enabled:c.checked});saveCfg({agent:{webhooks:H}})})}
+$("#agSave").onclick=()=>{if($("#agPerm").value==="full"&&$("#agRobots").checked&&!confirm("Агент сможет самостоятельно разрешать опрос лент, запрещённых robots.txt. Подтверждаете?"))return;saveCfg({agent:{enabled:$("#agEnabled").checked,permissions:$("#agPerm").value,allow_robots_override:$("#agRobots").checked}},"Сохранено")};
+$("#whAdd").onclick=()=>{const u=$("#whUrl").value.trim();if(!/^https?:\/\//.test(u))return toast("URL должен начинаться с http(s)://");const b={agent:{webhooks:(CFG.agent.webhooks||[]).concat([{url:u,enabled:true,events:split($("#whEv").value)}])}};if($("#whSecret").value)b.webhook_secret=$("#whSecret").value;saveCfg(b,"Вебхук добавлен").then(()=>{$("#whUrl").value="";$("#whSecret").value=""})};
+$("#whTest").onclick=e=>act(e.target,()=>api("/webhooks/test",{}),r=>r.message);
+async function loadAgent(){try{AGI=await api("/agent/info");$("#mcpCfg").textContent=JSON.stringify(AGI.claude_desktop_config,null,2);$("#mcpCc").textContent='claude mcp add hk-case-law -- "'+AGI.mcp_command+'" mcp';$("#apiBase").textContent=AGI.base_url;$("#apiSpec").textContent=AGI.openapi;$("#apiTok").value=AGI.token;$("#cliHint").textContent=AGI.cli;$("#whEvents").textContent=AGI.webhook_events.join(", ");loadAudit()}catch(e){toast("Ошибка: "+e.message)}}
+$("#mcpCopy").onclick=async()=>{try{await navigator.clipboard.writeText($("#mcpCfg").textContent);toast("Скопировано")}catch(e){toast("Не удалось скопировать")}};
+$("#tokShow").onclick=()=>{const t=$("#apiTok");t.type=t.type==="password"?"text":"password"};
+$("#tokCopy").onclick=async()=>{try{await navigator.clipboard.writeText($("#apiTok").value);toast("Токен скопирован")}catch(e){toast("Не удалось скопировать")}};
+$("#tokRotate").onclick=e=>{if(!confirm("Выпустить новый токен? Подключённые агенты потеряют доступ до замены токена (MCP через hkcl.exe обновится сам)."))return;act(e.target,async()=>{const r=await api("/agent/token/rotate",{});B.token=r.token;await loadAgent()},"Новый токен выпущен")};
+async function loadAudit(){try{const a=$("#auActor").value;const r=(await api("/audit?limit=300"+(a?"&actor="+a:""))).audit;$("#auTbl tbody").innerHTML=r.length?r.map(x=>`<tr><td class="small" style="white-space:nowrap">${fmtDT(x.ts)}</td><td class="small">${esc(x.actor)}</td><td class="small">${esc(x.action)}</td><td class="small mono">${esc(JSON.stringify(x.details)).slice(0,300)}</td></tr>`).join(""):'<tr><td colspan="4" class="muted">Записей нет</td></tr>'}catch(e){}}
+$("#auReload").onclick=loadAudit;$("#auActor").onchange=loadAudit;
+LOADERS.agent=loadAgent;
+
+/* ===================== ИСТОЧНИКИ ===================== */
+const REF=[["Legal Reference System (LRS), Судебная власть","Решения судов всех уровней, Reasons for Verdict/Sentence, Press Summaries. Не все решения выложены.","«Newly Added» — за последние 6 рабочих дней","RSS по судам","Бесплатно. «Judgments may be downloaded for private study and research only». robots.txt (27.10.2026): User-Agent: * / Disallow: /.","RSS-мониторинг по решению оператора; ссылки поиска по NCN и сторонам"],
+["Court of Final Appeal — hkcfa.hk","Решения CFA; архив с 01.01.2015","Текущий и прошлый месяц","RSS CFA (лента LRS)","Бесплатно; тексты на LRS","Лента CFA по умолчанию"],
+["HKLII (HKU)","Решения с 1946 г. (данные Судебной власти), законодательство","Ежедневно","Нет","Бесплатно; только личное использование. Автоматические агенты для судебной практики запрещены.","Только ручной поиск"],
+["Westlaw Hong Kong / Asia","HKLRD с 1905 г., HKCFAR, Unreported Judgments, Case Analysis","Unreported — ежедневно","E-mail-оповещения","Подписка","Ссылка; оповещения — в Westlaw"],
+["Lexis+ Hong Kong","HKC с 1842 г., HK Cases Unreported с 1905 г., CaseBase","Не указано","Тематические и поисковые оповещения","Подписка","Ссылка; оповещения — в Lexis+"],
+["vLex","С 1971 г., более 100 000 дел","Не указано","E-mail-оповещения","Подписка; часть страниц открыта","Ссылка + Google по vlex.hk"]];
+const RL=[["Judiciary HK — Judgments","https://www.judiciary.hk/en/judgments_legal_reference/judgments.html"],["LRS — подписка на RSS","https://legalref.judiciary.hk/lrs/common/rss/subscribe.jsp"],["HKCFA — RSS","https://www.hkcfa.hk/en/rss/index.html"],["HKLII — Legal","https://www.hklii.org/legal"],["HKU Libraries — Hong Kong law guide","https://libguides.lib.hku.hk/lawguide/hongkong"],["CUHK Library — Current awareness","https://libguides.lib.cuhk.edu.hk/law/infoguide/awareness"],["Thomson Reuters — Westlaw Hong Kong","https://www.thomsonreuters.com.hk/en/products-services/legal-overview/westlaw-hong-kong/content.html"],["LexisNexis HK — Alerts","https://www.lexisnexis.com/supportandtraining/hk/b/hk-resources/posts/alerts"],["vLex — Hong Kong law","https://vlex.com/hong-kong-law/"]];
+function renderRef(){$("#refTbl tbody").innerHTML=REF.map(r=>`<tr>${r.map((c,i)=>`<td class="${i?"small":""}">${i?esc(c):"<b>"+esc(c)+"</b>"}</td>`).join("")}</tr>`).join("")+(CFG.custom_sources||[]).map(c=>`<tr><td><b>${esc(c.name)}</b> <span class="tag acc">мой</span></td><td class="small">${esc(c.desc||"—")}</td><td class="small">—</td><td class="small">${c.rss?"RSS":"—"}</td><td class="small">${c.kind==="paid"?"Подписка":"Бесплатно"}; условия проверяет оператор</td><td class="small">${(c.search||"").includes("{q}")?"Прямая ссылка поиска":"Ссылка + копирование запроса"}</td></tr>`).join("");
+  $("#refLinks").innerHTML=RL.map(([t,u])=>`<li><a href="#" data-ext="${u}">${esc(t)}</a></li>`).join("")}
+
+/* ===================== О ПРОГРАММЕ ===================== */
+function fillSettings(){const s=CFG.settings;$("#stProxy").value=s.proxy||"";$("#stCa").value=s.cafile||"";$("#stRet").value=s.retention_days;$("#stMinIv").value=s.min_interval_min;$("#stUpd").checked=s.check_updates!==false}
+$("#stSave2").onclick=()=>saveCfg({settings:{proxy:$("#stProxy").value.trim(),cafile:$("#stCa").value.trim(),retention_days:Math.max(30,+$("#stRet").value||730),min_interval_min:Math.max(5,+$("#stMinIv").value||10),check_updates:$("#stUpd").checked}},"Сохранено");
+$("#abFolder").onclick=()=>api("/app/open-folder",{}).catch(e=>toast(e.message));
+$("#abBackup").onclick=async()=>{try{const r=await fetch("/api/v1/backup",{headers:{"Authorization":"Bearer "+B.token,"X-HKCL-Actor":"ui"}});if(!r.ok)throw new Error("HTTP "+r.status);dl(await r.blob(),"hkcl_backup_"+stamp()+".zip");toast("Резервная копия сохранена в папку загрузок")}catch(e){toast("Ошибка: "+e.message)}};
+$("#abUpd").onclick=e=>act(e.target,async()=>{const r=await api("/update/check");$("#abUpdRes").innerHTML=!r.ok?"Не удалось проверить: "+esc(r.error):r.available?`Доступна версия <b>${esc(r.latest)}</b>. <a href="#" data-ext="${esc(r.url)}">Скачать</a> ${esc(r.notes||"")}`:"Установлена последняя версия ("+esc(r.current)+")"});
+$$("[data-legal]").forEach(b=>b.onclick=async()=>{try{const t=await (await fetch("legal/"+b.dataset.legal)).text();modal(b.textContent,`<pre>${esc(t)}</pre>`)}catch(e){toast("Не удалось открыть")}});
+async function loadAbout(){try{const a=await api("/about");$("#abName").textContent=a.app+" "+a.version;$("#abCopy").textContent=a.copyright;$("#abData").textContent=a.data_dir;$("#abInst").textContent=a.install_dir}catch(e){}}
+LOADERS.about=loadAbout;
+
+/* ===================== статус ===================== */
+async function refreshBadges(){try{const s=await api("/status");const u=s.events_unseen;$("#cCases").hidden=!u;$("#cCases").textContent=u;const a=s.automation;
+  $("#dAuto").className="dot "+(a.enabled&&!a.paused?"ok":"warn");$("#tAuto").textContent=a.enabled?(a.paused?"Автоматизация на паузе":"Автоматизация включена"):"Автоматизация выключена";$("#tNext").textContent=a.next_run?"Следующий запуск: "+fmtDT(a.next_run):"";
+  if(s.update&&s.update.available){$("#verLbl").innerHTML="версия "+esc(B.version)+' · <b style="color:#e7a54a">есть обновление</b>'}}catch(e){$("#dAuto").className="dot bad";$("#tAuto").textContent="Нет связи с ядром программы"}}
+
+(async function init(){try{CFG=await api("/config")}catch(e){document.body.innerHTML='<div style="padding:30px;font:15px Segoe UI">Не удалось подключиться к ядру программы: '+esc(e.message)+"</div>";return}
+  const q=LS.get("q",null);if(q){$("#qWords").value=q.words||"";$("#qPhrase").value=q.phrase||"";$("#qParties").value=q.parties||"";$("#qNcn").value=q.ncn||"";$("#qCase").value=q.case||"";$("#qCourt").value=q.court||""}
+  renderAllCfg();renderHist();refreshBadges();loadAbout();go(LS.get("tab","search"));setInterval(refreshBadges,30000)})();
+</script>
+</body>
+</html>

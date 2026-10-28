@@ -1,0 +1,71 @@
+ЛИЦЕНЗИОННОЕ СОГЛАШЕНИЕ С КОНЕЧНЫМ ПОЛЬЗОВАТЕЛЕМ
+программы «HK Case Law Monitor», версия 2.0
+
+Правообладатель: Вяселев Руслан Равилевич / Vyaselev Ruslan Ravilevich
+© 2026 Вяселев Руслан Равилевич. Все права защищены.
+
+Устанавливая, копируя или используя программу, вы (далее — «Пользователь») принимаете условия настоящего соглашения. Если вы не согласны с ними, не устанавливайте и не используйте программу.
+
+1. ПРЕДМЕТ
+1.1. Программа «HK Case Law Monitor» (далее — «Программа») предназначена для поиска и мониторинга судебной практики Гонконга, контроля дел, анализа загруженных пользователем документов и подключения ИИ-сервисов и ИИ-агентов.
+1.2. Правообладатель предоставляет Пользователю безвозмездную, неисключительную, непередаваемую лицензию на использование Программы на условиях настоящего соглашения.
+
+2. РАЗРЕШЁННОЕ ИСПОЛЬЗОВАНИЕ
+2.1. Программа может использоваться бесплатно исключительно в некоммерческих целях: для частного изучения и исследований, а также для некоммерческой (в том числе благотворительной) деятельности.
+2.2. Пользователь вправе устанавливать Программу на любое количество своих компьютеров и делать резервные копии.
+
+3. ОГРАНИЧЕНИЯ
+3.1. Запрещается: продавать, сдавать в аренду, сублицензировать Программу или предоставлять к ней платный доступ; использовать Программу для оказания платных услуг третьим лицам; удалять или изменять сведения о правообладателе и настоящее соглашение; распространять изменённые версии Программы.
+3.2. Коммерческое использование допускается только с письменного разрешения Правообладателя.
+
+4. СТОРОННИЕ КОМПОНЕНТЫ
+4.1. В состав Программы входят компоненты третьих лиц (интерпретатор Python, pywebview, pythonnet, Microsoft Edge WebView2 SDK, Pillow, pystray, pypdf, SheetJS и др.). Они распространяются на условиях собственных лицензий, перечисленных в файле THIRD-PARTY-NOTICES.txt. Настоящее соглашение не ограничивает прав Пользователя по этим лицензиям.
+
+5. ИСТОЧНИКИ ДАННЫХ
+5.1. Программа не является источником судебных решений. Она формирует ссылки на внешние базы, читает опубликованные RSS-ленты и обрабатывает документы, которые Пользователь загружает сам.
+5.2. Пользователь самостоятельно соблюдает условия использования внешних источников (в том числе Legal Reference System Судебной власти САР Гонконг, HKLII, коммерческих баз данных) и правила, выраженные в файлах robots.txt. Решения об опросе источников, автоматический доступ к которым ограничен, принимает Пользователь (оператор) либо ИИ-агент, которому Пользователь предоставил соответствующие права. Ответственность за такие решения несёт Пользователь.
+5.3. Права на тексты судебных решений принадлежат их правообладателям.
+
+6. ИИ-СЕРВИСЫ И ИИ-АГЕНТЫ
+6.1. Подключение языковых моделей (Anthropic, OpenAI, совместимых сервисов) выполняется через учётные записи и ключи Пользователя и регулируется условиями соответствующих поставщиков. Тексты документов передаются внешнему сервису только при согласии, отмеченном Пользователем в настройках.
+6.2. Результаты, сформированные ИИ, могут содержать ошибки и подлежат проверке человеком.
+6.3. Пользователь самостоятельно определяет права подключаемых ИИ-агентов и отвечает за их действия. Программа ведёт журнал аудита действий агентов.
+
+7. НЕ ЯВЛЯЕТСЯ ЮРИДИЧЕСКОЙ КОНСУЛЬТАЦИЕЙ
+7.1. Программа — вспомогательный инструмент. Она не оказывает юридических услуг и не заменяет профессиональное суждение. Итоговые решения принимает Пользователь.
+
+8. ДАННЫЕ ПОЛЬЗОВАТЕЛЯ
+8.1. Настройки, собранные сведения и документы хранятся на компьютере Пользователя. Пароли и ключи хранятся в зашифрованном виде средствами Windows (DPAPI).
+8.2. Программа не передаёт данные Правообладателю. Сетевые обращения выполняются только к источникам и сервисам, настроенным Пользователем, а также для проверки обновлений (файл version.json на странице программы; отключается в настройках).
+
+9. ОТКАЗ ОТ ГАРАНТИЙ
+9.1. Программа предоставляется «как есть». Правообладатель не гарантирует её пригодность для конкретных целей, полноту и актуальность данных из внешних источников, бесперебойную работу и отсутствие ошибок.
+
+10. ОГРАНИЧЕНИЕ ОТВЕТСТВЕННОСТИ
+10.1. В максимальной степени, допускаемой применимым правом, Правообладатель не несёт ответственности за любые прямые или косвенные убытки, упущенную выгоду, утрату данных, а также за последствия решений, принятых на основе работы Программы, ИИ-сервисов или ИИ-агентов.
+
+11. СРОК И ПРЕКРАЩЕНИЕ
+11.1. Соглашение действует с момента установки Программы и до её удаления. При нарушении условий соглашения лицензия прекращается автоматически.
+
+12. ПРИМЕНИМОЕ ПРАВО
+12.1. К настоящему соглашению применяется законодательство Российской Федерации.
+
+----------------------------------------------------------------------
+
+END USER LICENSE AGREEMENT
+"HK Case Law Monitor", version 2.0
+
+Licensor: Vyaselev Ruslan Ravilevich / Вяселев Руслан Равилевич
+© 2026 Vyaselev Ruslan Ravilevich. All rights reserved.
+
+By installing, copying or using the software you ("User") accept this agreement. If you do not agree, do not install or use the software.
+
+1. The Licensor grants the User a free, non-exclusive, non-transferable licence to use HK Case Law Monitor ("Software") solely for non-commercial purposes: private study and research and non-commercial (including charitable) activities. The User may install the Software on any number of own computers and make backup copies.
+2. The User may not sell, rent, sublicense or provide paid access to the Software, use it to provide paid services to third parties, remove or alter copyright notices or this agreement, or distribute modified versions. Commercial use requires the Licensor's written permission.
+3. Third-party components (Python, pywebview, pythonnet, Microsoft Edge WebView2 SDK, Pillow, pystray, pypdf, SheetJS, etc.) are licensed under their own terms listed in THIRD-PARTY-NOTICES.txt.
+4. The Software is not a source of court judgments. The User is responsible for complying with the terms of external sources (including the Hong Kong Judiciary Legal Reference System, HKLII and commercial databases) and with robots.txt rules. Decisions to poll sources whose automated access is restricted are made by the User or by an AI agent to which the User granted such rights, at the User's responsibility.
+5. AI services are used through the User's own accounts and keys under the providers' terms; document texts are sent only with the User's consent recorded in the settings. AI output may contain errors and must be reviewed by a human. The User defines AI agent permissions and is responsible for agent actions; the Software keeps an audit log.
+6. The Software is an auxiliary tool and does not provide legal advice.
+7. User data is stored on the User's computer; passwords and keys are encrypted with Windows DPAPI. The Software does not send data to the Licensor; network requests go only to sources and services configured by the User and to the update check (can be disabled).
+8. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE LICENSOR SHALL NOT BE LIABLE FOR ANY DAMAGES, LOSS OF PROFIT OR DATA, OR CONSEQUENCES OF DECISIONS MADE ON THE BASIS OF THE SOFTWARE, AI SERVICES OR AI AGENTS.
+9. This agreement is effective from installation until removal of the Software and terminates automatically upon breach. It is governed by the laws of the Russian Federation. In case of discrepancies, the Russian text prevails.
