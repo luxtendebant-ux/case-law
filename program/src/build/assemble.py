@@ -32,13 +32,7 @@ for whl in sorted(glob.glob(os.path.join(B, "wheels", "*.whl"))):
     l = re.search(r"^License(?:-Expression)?: (.+)$", meta, re.M)
     title = "%s %s (%s)" % (m.group(1) if m else name, v.group(1) if v else "", l.group(1).strip() if l else "см. текст")
     notices.append((title, "\n\n".join(lic_txt) or "Лицензия: " + (l.group(1) if l else "см. метаданные пакета")))
-# лишние бэкенды pystray/pywebview для других ОС
-for p in ["pystray/_xorg.py", "pystray/_gtk.py", "pystray/_appindicator.py", "pystray/_darwin.py",
-          "webview/platforms/cocoa.py", "webview/platforms/gtk.py", "webview/platforms/qt.py", "webview/platforms/android.py",
-          "webview/lib/runtimes/win-arm64", "webview/lib/runtimes/win-x86", "webview/lib/WebBrowserInterop.x86.dll"]:
-    fp = os.path.join(lib, p)
-    if os.path.isdir(fp): shutil.rmtree(fp)
-    elif os.path.exists(fp): os.remove(fp)
+# Пакеты копируются целиком: pywebview при запуске обращается к компонентам всех архитектур (win-arm64/x64/x86).
 notices.append(("SheetJS Community Edition 0.18.5 (Apache License 2.0)",
                 "Copyright (C) 2012-present SheetJS LLC. Licensed under the Apache License, Version 2.0: http://www.apache.org/licenses/LICENSE-2.0"))
 notices.append(("Microsoft Edge WebView2 SDK (Microsoft.Web.WebView2.Core.dll, Microsoft.Web.WebView2.WinForms.dll, WebView2Loader.dll; поставляются в составе pywebview)",

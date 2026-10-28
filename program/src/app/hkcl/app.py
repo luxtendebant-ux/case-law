@@ -199,12 +199,17 @@ def run_gui(hidden=False):
                             "Пока компонент не установлен, программа откроется в браузере по умолчанию.", kind=0x24)
             if r == 6:
                 webbrowser.open(WEBVIEW2_URL)
+    if use_window and IS_WIN:
+        try:
+            prepare_webview(url)
+        except Exception as e:
+            import traceback
+            S.log("Окно WebView2 недоступно: %s\n%s" % (e, traceback.format_exc()), "ERROR")
+            use_window = False
+            if not hidden:
+                window_failed_notice(e)
     if not use_window:
-        if not hidden:
-            webbrowser.open(url)
-        while not UI["quitting"]:
-            time.sleep(1)
-        return 0
+        return browser_mode(url, hidden)
     webview.settings["ALLOW_DOWNLOADS"] = True
     webview.settings["OPEN_EXTERNAL_LINKS_IN_BROWSER"] = True
     start_hidden = hidden or S.get_config()["settings"].get("start_minimized")
@@ -213,7 +218,7 @@ def run_gui(hidden=False):
     UI["window"] = w
 
     def on_closing():
-        if UI["quitting"]:
+        if UI["quitting"] or UI.get("browser_mode"):
             return True
         if S.get_config()["settings"].get("minimize_to_tray", True) and UI.get("tray"):
             threading.Thread(target=w.hide, daemon=True).start()
@@ -223,11 +228,70 @@ def run_gui(hidden=False):
         return True
 
     w.events.closing += on_closing
-    webview.start(gui="edgechromium" if IS_WIN else None, private_mode=False, icon=ICON,
-                  storage_path=S.path("webview", ".keep") and os.path.join(S.data_dir(), "webview"))
+    try:
+        webview.start(gui="edgechromium" if IS_WIN else None, private_mode=False, icon=ICON,
+                      storage_path=os.path.join(S.data_dir(), "webview"))
+    except Exception as e:
+        import traceback
+        S.log("Сбой окна WebView2: %s\n%s" % (e, traceback.format_exc()), "ERROR")
+        UI["window"] = None
+        if not hidden:
+            window_failed_notice(e)
+        return browser_mode(url, hidden)
+    if UI.get("browser_mode") and not UI["quitting"]:
+        UI["window"] = None
+        return browser_mode(url, True)
     if not UI["quitting"]:
         quit_all()
     return 0
+
+
+def window_failed_notice(err):
+    message_box("Собственное окно программы открыть не удалось:\n%s\n\n"
+                "Программа откроется в браузере и продолжит работать в области уведомлений "
+                "(расписание, ИИ-агент, уведомления).\n\nПодробности — в журнале:\n%s" % ((str(err).strip().splitlines() or ["?"])[0][:300], S.path("logs", "hkcl.log")), kind=0x30)
+
+
+def browser_mode(url, hidden):
+    UI["browser_mode"] = True
+    if not hidden:
+        webbrowser.open(url)
+    while not UI["quitting"]:
+        time.sleep(1)
+    return 0
+
+
+def prepare_webview(url):
+    """Загрузка платформы WinForms/WebView2 заранее, чтобы ошибки .NET/WebView2 перехватывались до создания окна.
+    Включение контекстного меню (копировать/вставить) и контроль инициализации WebView2."""
+    os.makedirs(os.path.join(S.data_dir(), "webview"), exist_ok=True)
+    from webview.platforms import winforms  # noqa: F401  (загружает .NET, pythonnet, WebView2 SDK)
+    from webview.platforms import edgechromium as ec
+    if getattr(ec.EdgeChrome, "_hkcl_patched", False):
+        return
+    orig = ec.EdgeChrome.on_webview_ready
+
+    def on_ready(self, sender, args):
+        if not args.IsSuccess:
+            S.log("Инициализация WebView2 не удалась: %s" % args.InitializationException, "ERROR")
+            UI["browser_mode"] = True
+            webbrowser.open(url)
+            notify(APP_NAME, "Окно не открылось — программа открыта в браузере")
+            try:
+                threading.Thread(target=UI["window"].destroy, daemon=True).start()
+            except Exception:
+                pass
+            return
+        orig(self, sender, args)
+        try:
+            st = sender.CoreWebView2.Settings
+            st.AreDefaultContextMenusEnabled = True   # копировать / вставить правой кнопкой
+            st.IsStatusBarEnabled = False
+        except Exception as e:
+            S.log("Настройки WebView2: %s" % e, "WARN")
+
+    ec.EdgeChrome.on_webview_ready = on_ready
+    ec.EdgeChrome._hkcl_patched = True
 
 
 def run_once():

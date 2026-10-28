@@ -1,9 +1,12 @@
-# HK Case Law Monitor 2.0.0 для Windows
+# HK Case Law Monitor 2.0.1 для Windows
 
 © 2026 Вяселев Руслан Равилевич / Vyaselev Ruslan Ravilevich. Бесплатно для частного некоммерческого использования (лицензионное соглашение — в установщике и в `src/app/web/legal/EULA.txt`).
 
-**Скачать:** [HKCaseLawMonitor-Setup-2.0.0.exe](https://luxtendebant-ux.github.io/case-law/program/HKCaseLawMonitor-Setup-2.0.0.exe) (14385984 байт)
-SHA-256: `da8aba59924147d34aa983ce1350b144f6072d77f72b18616e9165ba79e4df2d`
+**Скачать:** [HKCaseLawMonitor-Setup-2.0.1.exe](https://luxtendebant-ux.github.io/case-law/program/HKCaseLawMonitor-Setup-2.0.1.exe) (14507202 байт)
+SHA-256: `8447239f3acc715c9b86b98a8060812aec1cbdbd30dce854b78bf00cf84a4e56`
+
+## Изменения
+- 2.0.1 (28.10.2026): исправлен запуск окна (ошибка «Cannot find win-arm64» в 2.0.0); при любом сбое окна программа открывается в браузере и продолжит работу в области уведомлений; в окне включено контекстное меню (копировать/вставить). Устанавливается поверх 2.0.0, данные сохраняются.
 
 ## Требования
 - Windows 10 или 11, 64 бит. Права администратора не нужны: установка в `%LOCALAPPDATA%\Programs\HK Case Law Monitor`.
